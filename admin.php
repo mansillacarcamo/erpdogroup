@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($action === 'cambiar_rol') {
     $uid = (int)($_POST['uid'] ?? 0);
     $nuevoRol = $_POST['nuevo_rol'] ?? '';
-    if ($uid && in_array($nuevoRol, ['usuario', 'admin', 'gerente_comercial'])) {
+    if ($uid && in_array($nuevoRol, ['usuario', 'admin', 'gerente_comercial', 'gerente_general'])) {
       if ($uid === $usuario['id']) {
         $msg = ['danger', 'No puede cambiar su propio rol'];
       } else {
