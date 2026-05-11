@@ -1,0 +1,22 @@
+# Instaladores / utilidades temporales
+composer.phar
+composer-setup.php
+fix_perms.php
+diagnostico.php
+test_error.php
+
+# Configuración sensible local
+smtp_config.local.php
+
+# Subidas de usuarios (no versionar datos reales)
+uploads/*
+!uploads/.gitkeep
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+*.log
+
+# Editores
+.vscode/
+.idea/

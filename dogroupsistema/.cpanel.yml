@@ -1,0 +1,21 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/dogroupc/public_html/
+    # Sincroniza el repo a public_html, EXCLUYENDO datos de producción y secretos
+    - /usr/bin/rsync -av --delete
+        --exclude='.git/'
+        --exclude='.gitignore'
+        --exclude='.cpanel.yml'
+        --exclude='*.db'
+        --exclude='*.db-journal'
+        --exclude='*.db-shm'
+        --exclude='*.db-wal'
+        --exclude='uploads/'
+        --exclude='backups/'
+        --exclude='vendor/'
+        --exclude='smtp_config.php'
+        --exclude='ocdogroup/smtp_config.php'
+        --exclude='ocdogroup/uploads/'
+        --exclude='ocdogroup/vendor/'
+        ./ $DEPLOYPATH

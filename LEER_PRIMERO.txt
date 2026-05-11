@@ -1,0 +1,42 @@
+==========================================
+  DOGROUP — Cómo abrir en tu PC Windows
+==========================================
+
+SOLO NECESITAS SEGUIR 3 PASOS:
+--------------------------------
+
+PASO 1 — Instalar Laragon (solo la primera vez)
+  → Doble clic en: PASO1_instalar_laragon.bat
+  → Se descarga e instala Laragon automáticamente
+  → Cuando termine, abre Laragon y haz clic en "Start All"
+  → El ícono de Laragon aparece en la barra de tareas
+
+PASO 2 — Copiar el proyecto
+  → Doble clic en: PASO2_copiar_proyecto.bat
+  → Copia todos los archivos a C:\laragon\www\dogroup\
+  → Abre el navegador automáticamente
+
+PASO 3 — Ingresar al sistema
+  → Ve a: http://localhost/dogroup/login.php
+  → Usuario: cesar.mansilla
+  → Clave: la tuya
+
+==========================================
+  PARA LAS PRÓXIMAS VECES:
+==========================================
+
+1. Abre Laragon (ícono en el escritorio)
+2. Haz clic en "Start All"
+3. Ve a http://localhost/dogroup/login.php
+
+==========================================
+  SI NO FUNCIONA:
+==========================================
+
+- Asegúrate que Laragon está corriendo (Start All)
+- Verifica que la carpeta C:\laragon\www\dogroup existe
+- Revisa que el archivo ocdogroup.db está en la carpeta
+
+==========================================
+  DOGROUP © 2024 — Bynari SpA
+==========================================

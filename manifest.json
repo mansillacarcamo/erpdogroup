@@ -1,0 +1,39 @@
+{
+  "name": "DOGroup",
+  "short_name": "DOGroup",
+  "description": "Sistema de gestión DOGroup — Departamento de Informática DOGroup",
+  "start_url": "./inicio.php",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "lang": "es-CL",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Distribución de Combustible",
+      "short_name": "Combustible",
+      "description": "Registrar y ver hojas de combustible",
+      "url": "./combustible.php",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nueva hoja de combustible",
+      "short_name": "Nueva hoja",
+      "url": "./combustible_hoja_nueva.php",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tickets de Despacho",
+      "short_name": "Despacho",
+      "url": "./tickets_despacho.php",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

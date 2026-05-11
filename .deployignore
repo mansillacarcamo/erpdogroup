@@ -1,0 +1,43 @@
+# Archivos y carpetas EXCLUIDOS del paquete de produccion.
+# Cualquier ruta que matchee no va al ZIP.
+
+# Backups locales (Benza tiene los suyos + nuestro cron)
+backups/
+gastos_diarios/backups/
+
+# Control de versiones
+.git/
+.gitignore
+.gitattributes
+
+# Archivos temporales del WAL (se regeneran solos)
+*.db-wal
+*.db-shm
+
+# Drafts y notas internas
+_commitmsg.txt
+_generate_icons.php
+_refactor_cot.php
+
+# Artefactos de desarrollo (peligrosos en produccion)
+gastos_diarios/dev_login.php
+dev_login.php
+
+# Documentacion interna que expone arquitectura (opcional)
+INSTALACION_chequeo_y_fixes.md
+INSTALACION_combustible.md
+INSTALACION_perfil_combustible.md
+INSTALACION_salida_ticket.md
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs locales
+*.log
+
+# El propio ZIP de deploy
+deploy_*.zip
+.deployignore

@@ -1,0 +1,38 @@
+# --- Bases de datos SQLite (datos reales) ---
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# --- Backups y archivos generados ---
+backups/
+uploads/
+*.bak
+*.log
+*.tmp
+
+# --- Dependencias ---
+vendor/
+composer.phar
+
+# --- Cache / IDE / herramientas locales ---
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Configuración con secretos ---
+smtp_config.php
+ocdogroup/smtp_config.php
+smtp_config.local.php
+config.local.php
+.env
+.env.local
+
+# --- Archivos temporales del proyecto ---
+_commitmsg.txt
+debug.php
+test_error.php

@@ -1,0 +1,340 @@
+:root{
+  --brand:#0d6efd;
+  --brand-2:#3b82f6;
+  --brand-dark:#0a58ca;
+  --ok:#10b981;
+  --warn:#f59e0b;
+  --bad:#ef4444;
+  --sidebar-w: 260px;
+  --sidebar-bg: #0f172a;
+  --sidebar-bg-2: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-muted: #64748b;
+  --sidebar-active: #3b82f6;
+}
+
+*{ box-sizing:border-box; }
+body{
+  font-family:'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  background:#f1f5f9;
+  margin:0;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar{
+  width: var(--sidebar-w);
+  background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-2) 100%);
+  color: var(--sidebar-text);
+  display:flex; flex-direction:column;
+  box-shadow: 4px 0 20px rgba(15,23,42,.15);
+  overflow: hidden;
+}
+/* En escritorio el sidebar es fijo a la izquierda */
+@media (min-width:992px){
+  .sidebar{
+    position:fixed; top:0; left:0; bottom:0;
+    z-index:1040;
+  }
+}
+/* En movil dejamos que Bootstrap controle el offcanvas, pero subimos
+   el z-index por encima del backdrop (1040) para que reciba clicks */
+@media (max-width:991.98px){
+  .sidebar.offcanvas-lg{
+    z-index:1046;
+  }
+}
+.sidebar-brand{
+  display:flex; align-items:center; gap:12px;
+  padding:20px 18px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  background: rgba(0,0,0,.15);
+}
+.sidebar-logo{
+  width:42px; height:42px;
+  background: linear-gradient(135deg, var(--brand) 0%, #6366f1 100%);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; color:#fff;
+  box-shadow:0 4px 14px rgba(13,110,253,.4);
+}
+.sidebar-title{
+  font-weight:700; color:#fff; font-size:.98rem; line-height:1.1;
+}
+.sidebar-subtitle{
+  color: var(--sidebar-text-muted); font-size:.7rem; margin-top:2px;
+}
+
+.sidebar-nav{
+  flex:1; overflow-y:auto;
+  padding: 14px 12px;
+}
+.sidebar-nav::-webkit-scrollbar{ width:5px; }
+.sidebar-nav::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.1); border-radius:5px; }
+
+.side-section{
+  font-size:.68rem; text-transform:uppercase;
+  color: var(--sidebar-text-muted);
+  padding:14px 12px 6px; letter-spacing:1px; font-weight:600;
+}
+.side-list{ list-style:none; padding:0; margin:0; }
+
+.side-link{
+  display:flex; align-items:center; gap:12px;
+  padding:11px 14px;
+  border-radius:10px;
+  color: var(--sidebar-text);
+  text-decoration:none;
+  font-weight:500; font-size:.92rem;
+  margin-bottom:3px;
+  position:relative;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+.side-link::before{
+  content:''; position:absolute; left:-12px; top:50%; transform:translateY(-50%) scaleY(0);
+  width:3px; height:24px; background: var(--brand-2);
+  border-radius:0 3px 3px 0;
+  transition: transform .25s;
+}
+.side-link:hover{
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  transform: translateX(2px);
+}
+.side-link:hover .side-icon{
+  background: rgba(59,130,246,.2);
+  color: var(--brand-2);
+}
+.side-link.active{
+  background: linear-gradient(90deg, rgba(59,130,246,.18) 0%, rgba(59,130,246,.04) 100%);
+  color:#fff;
+}
+.side-link.active::before{ transform: translateY(-50%) scaleY(1); }
+.side-link.active .side-icon{
+  background: var(--brand);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(13,110,253,.4);
+}
+
+.side-icon{
+  width:34px; height:34px; flex-shrink:0;
+  background: rgba(255,255,255,.04);
+  border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.05rem;
+  transition: all .25s;
+}
+.side-label{ flex:1; }
+
+.side-link-danger{ color:#fca5a5; }
+.side-link-danger:hover{ background: rgba(239,68,68,.1); color:#fff; }
+.side-link-danger:hover .side-icon{ background: rgba(239,68,68,.2); color:#fca5a5; }
+
+.sidebar-user{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px;
+  border-top:1px solid rgba(255,255,255,.06);
+  background: rgba(0,0,0,.2);
+}
+.user-avatar{
+  width:38px; height:38px; flex-shrink:0;
+  background: linear-gradient(135deg, var(--brand) 0%, #8b5cf6 100%);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:700; font-size:1rem;
+}
+.user-info{ flex:1; min-width:0; }
+.user-name{ color:#fff; font-weight:600; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-rol{ color: var(--sidebar-text-muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; }
+.user-edit{
+  width:34px; height:34px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px;
+  color: var(--sidebar-text); text-decoration:none;
+  transition: all .2s;
+}
+.user-edit:hover{ background: rgba(255,255,255,.1); color:#fff; transform:rotate(60deg); }
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main-content{
+  margin-left: var(--sidebar-w);
+  min-height:100vh;
+  transition: margin-left .3s;
+}
+
+/* ============================================================
+   MOBILE TOPBAR
+   ============================================================ */
+.mobile-topbar{
+  display:flex; align-items:center; gap:4px;
+  background: linear-gradient(135deg, var(--brand) 0%, #4f46e5 100%);
+  color:#fff; padding:8px 10px;
+  position:sticky; top:0; z-index:1030;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+.mobile-brand{ font-weight:700; font-size:1rem; flex-grow:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 6px; }
+.btn-burger{
+  background:transparent; border:0; color:#fff;
+  width:42px; height:42px; min-width:42px; display:flex; align-items:center; justify-content:center;
+  border-radius:10px; font-size:1.35rem;
+  transition: background .2s;
+  text-decoration:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color: rgba(255,255,255,.25);
+}
+.btn-burger:hover, .btn-burger:active, .btn-burger:focus{ background: rgba(255,255,255,.18); color:#fff; outline:none; }
+
+/* Boton "Cerrar sesion" del sidebar - mas visible */
+.side-link-danger{
+  color:#fca5a5 !important; margin-top:8px;
+  border-top:1px solid rgba(255,255,255,.08); padding-top:14px !important;
+}
+.side-link-danger:hover, .side-link-danger:active, .side-link-danger:focus{
+  background: rgba(220,53,69,.18) !important; color:#fff !important;
+}
+
+/* En pantallas chicas, esconder marca larga */
+@media (max-width:380px){
+  .mobile-brand{ font-size:.85rem; }
+}
+
+/* En móvil ocultar margen y mostrar offcanvas */
+@media (max-width:991.98px){
+  .main-content{ margin-left:0; }
+  .sidebar:not(.show){
+    /* offcanvas-lg controla el comportamiento */
+  }
+}
+
+/* ============================================================
+   COMPONENTES
+   ============================================================ */
+.card{ border:0; border-radius:14px; box-shadow:0 4px 18px rgba(15,23,42,.06); }
+.card-header{ background:#fff; border-bottom:1px solid #f1f5f9; border-radius:14px 14px 0 0; font-weight:600; padding: .85rem 1.1rem; }
+.btn-primary{ background:var(--brand); border-color:var(--brand); }
+.btn-primary:hover{ background:var(--brand-dark); border-color:var(--brand-dark); }
+
+.bg-gradient-brand{
+  background: linear-gradient(135deg,#0d6efd 0%, #4f46e5 100%);
+  color:#fff;
+}
+.saldo-box{
+  border-radius:18px;
+  padding:1.4rem 1.2rem;
+  color:#fff;
+  position:relative; overflow:hidden;
+}
+.saldo-box::after{
+  content:''; position:absolute; right:-30px; top:-30px;
+  width:120px; height:120px; border-radius:50%;
+  background: rgba(255,255,255,.1);
+}
+.saldo-box .label{ opacity:.85; font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; }
+.saldo-box .monto{ font-size:2.2rem; font-weight:700; line-height:1.1; }
+
+.kpi{
+  border-radius:14px;
+  padding:1rem;
+  background:#fff;
+  border:1px solid #eef2f7;
+  transition: transform .2s, box-shadow .2s;
+}
+.kpi:hover{ transform: translateY(-2px); box-shadow:0 8px 20px rgba(15,23,42,.08); }
+.kpi .lbl{ color:#64748b; font-size:.78rem; text-transform:uppercase; letter-spacing:.5px; }
+.kpi .val{ font-size:1.4rem; font-weight:700; color:#0f172a; }
+
+.cat-pill{
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.2rem .6rem; border-radius:999px;
+  background:#eef2ff; color:#3730a3; font-size:.78rem; font-weight:600;
+}
+.estado{
+  display:inline-block; padding:.2rem .55rem; border-radius:999px;
+  font-size:.72rem; font-weight:700; text-transform:uppercase;
+}
+.estado.registrado{ background:#e0f2fe; color:#0369a1; }
+.estado.aprobado{ background:#dcfce7; color:#166534; }
+.estado.rechazado{ background:#fee2e2; color:#991b1b; }
+.estado.borrador{ background:#f1f5f9; color:#475569; }
+.estado.enviado_jefe{ background:#fef3c7; color:#92400e; }
+.estado.aprobado_jefe{ background:#dbeafe; color:#1e3a8a; }
+.estado.enviado_validador{ background:#ede9fe; color:#5b21b6; }
+.estado.validado{ background:#dcfce7; color:#166534; }
+
+.dropzone{
+  border:2px dashed #cbd5e1; border-radius:14px;
+  padding:1.2rem; text-align:center; background:#f8fafc;
+  transition:.2s;
+}
+.dropzone:hover{ border-color:var(--brand); background:#eff6ff; }
+.thumb{
+  width:80px; height:80px; object-fit:cover; border-radius:10px; border:1px solid #e2e8f0;
+}
+
+@media (max-width:576px){
+  .saldo-box .monto{ font-size:1.9rem; }
+  .kpi .val{ font-size:1.15rem; }
+  h1,.h1{ font-size:1.4rem; }
+  h2,.h2{ font-size:1.2rem; }
+}
+
+.list-group-item.gasto{
+  border-radius:12px !important; margin-bottom:.5rem; border:1px solid #eef2f7;
+  transition: transform .15s, box-shadow .15s;
+}
+.list-group-item.gasto:hover{ transform: translateX(2px); box-shadow:0 4px 12px rgba(15,23,42,.05); }
+
+.fab{
+  position:fixed; right:18px; bottom:18px; z-index:50;
+  width:58px; height:58px; border-radius:50%;
+  background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 20px rgba(13,110,253,.4);
+  font-size:1.6rem; text-decoration:none;
+  transition: transform .2s;
+}
+.fab:hover{ color:#fff; background:#0b5ed7; transform: scale(1.1); }
+
+.login-bg{
+  min-height:100vh;
+  background: linear-gradient(135deg,#0d6efd 0%, #6366f1 50%, #8b5cf6 100%);
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+.login-card{
+  background:#fff; border-radius:20px; padding:2rem 1.6rem;
+  box-shadow:0 20px 50px rgba(0,0,0,.25); width:100%; max-width:420px;
+}
+
+/* offcanvas en escritorio: fuerza visible */
+@media (min-width:992px){
+  .offcanvas-lg.sidebar{
+    transform:none !important;
+    visibility:visible !important;
+    position:fixed !important;
+  }
+}
+
+/* ============================================================
+   FIX OFFCANVAS MOVIL
+   - El sidebar tenia z-index 1040 (igual al .offcanvas-backdrop),
+     por eso el fondo oscuro tapaba los enlaces y nada respondia.
+   - Ahora el sidebar va por encima del backdrop y conserva los clicks.
+   ============================================================ */
+@media (max-width:991.98px){
+  .sidebar.offcanvas-lg{ z-index:1046 !important; }
+  .sidebar.offcanvas-lg.show{ z-index:1046 !important; }
+  /* Asegurar que los enlaces interiores reciban eventos tactiles */
+  .sidebar.offcanvas-lg .side-link,
+  .sidebar.offcanvas-lg .btn-close,
+  .sidebar.offcanvas-lg .user-edit{
+    pointer-events:auto;
+    touch-action:manipulation;
+  }
+}
+
+.kpi .val{ white-space:nowrap; }
+.saldo-box .monto{ white-space:nowrap; }
+.gasto .fs-5{ white-space:nowrap; }

@@ -1,0 +1,17 @@
+# Evitar listado de directorio
+Options -Indexes
+
+# Proteger la base de datos SQLite
+<Files "ocdogroup.db">
+  Require all denied
+</Files>
+<FilesMatch "\.(db|sqlite|sqlite3)$">
+  Require all denied
+</FilesMatch>
+
+# Proteger archivos sensibles de Composer
+<FilesMatch "^(composer\.(json|lock|phar)|composer-setup\.php)$">
+  Require all denied
+</FilesMatch>
+
+DirectoryIndex index.php

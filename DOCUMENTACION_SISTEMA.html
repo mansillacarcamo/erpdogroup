@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentación Sistema DOGroup - OC y Cotizaciones</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; line-height: 1.6; color: #1a1a2e; max-width: 210mm; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 24px; color: #d97706; border-bottom: 3px solid #d97706; padding-bottom: 8px; page-break-before: auto; }
+  h2 { font-size: 18px; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 4px; margin-top: 30px; page-break-before: always; }
+  h2:first-of-type { page-break-before: auto; }
+  h3 { font-size: 14px; color: #d97706; margin-top: 20px; }
+  h4 { font-size: 12px; color: #333; margin-top: 14px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 11px; }
+  th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #1a1a2e; color: #fff; font-weight: 600; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  .cover { text-align: center; padding: 80px 0 60px; page-break-after: always; }
+  .cover h1 { font-size: 36px; border: none; color: #1a1a2e; }
+  .cover h2 { font-size: 20px; border: none; color: #d97706; page-break-before: auto; }
+  .cover .empresa { font-size: 14px; color: #555; margin-top: 40px; }
+  .cover .fecha { font-size: 12px; color: #999; margin-top: 10px; }
+  .toc { page-break-after: always; }
+  .toc ul { list-style: none; padding: 0; }
+  .toc li { padding: 4px 0; border-bottom: 1px dotted #ccc; }
+  .toc a { text-decoration: none; color: #1a1a2e; }
+  .flow-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .flow-arrow { text-align: center; color: #d97706; font-size: 18px; font-weight: bold; margin: 4px 0; }
+  .flow-step { background: #fff; border: 2px solid #d97706; border-radius: 6px; padding: 10px 14px; margin: 6px 0; }
+  .flow-step.alt { border-color: #0d6efd; }
+  .flow-step.success { border-color: #198754; }
+  .flow-step.danger { border-color: #dc3545; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; color: #fff; }
+  .badge-admin { background: #dc3545; }
+  .badge-user { background: #6c757d; }
+  .badge-val { background: #d97706; }
+  .note { background: #fff3cd; border-left: 4px solid #d97706; padding: 10px 14px; margin: 12px 0; font-size: 11px; }
+  .diagram-container { text-align: center; margin: 20px 0; }
+  .diagram-container svg { max-width: 100%; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-family: Consolas, monospace; font-size: 11px; }
+  .func-sig { font-family: Consolas, monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px; display: block; margin: 4px 0; }
+  ul { padding-left: 20px; }
+  .screenshot-placeholder { border: 2px dashed #ccc; border-radius: 8px; padding: 30px; text-align: center; color: #999; margin: 10px 0; }
+  @media print {
+    body { padding: 0; }
+    h2 { page-break-before: always; }
+    h2:first-of-type { page-break-before: auto; }
+    table { page-break-inside: avoid; }
+    .flow-box { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <h1>SISTEMA DOGroup</h1>
+  <h2>Gestión de Órdenes de Compra y Cotizaciones</h2>
+  <p style="font-size:16px;color:#333;margin-top:30px;">Documentación Técnica y Manual de Usuario</p>
+  <div class="empresa">
+    <strong>INMOBILIARIA E INVERSIONES DON ORLANDO SPA</strong><br>
+    RUT: 77.930.045-5<br>
+    Av. Eleuterio Ramírez 6496 Dpto. 33, Osorno
+  </div>
+  <div class="fecha">Versión 1.0 — Abril 2026</div>
+  <div style="margin-top:50px;">
+    <table style="width:60%;margin:0 auto;font-size:12px;">
+      <tr><th colspan="2" style="text-align:center;">Contenido del Documento</th></tr>
+      <tr><td>1.</td><td>Diagrama de Flujo del Sistema</td></tr>
+      <tr><td>2.</td><td>Base de Datos (Esquema Completo)</td></tr>
+      <tr><td>3.</td><td>Funciones del Sistema</td></tr>
+      <tr><td>4.</td><td>Manual de Usuario</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECCIÓN 1: DIAGRAMA DE FLUJO -->
+<!-- ============================================ -->
+<h2 id="flujo">1. Diagrama de Flujo del Sistema</h2>
+
+<h3>1.1 Flujo General de Navegación</h3>
+<div class="flow-box">
+  <div class="flow-step"><strong>Login</strong> — Autenticación de usuario (usuario + contraseña)</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step success"><strong>Dashboard / Menú Lateral</strong> — Acceso según rol del usuario</div>
+  <div class="flow-arrow">▼ ▼ ▼ ▼ ▼</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div class="flow-step" style="flex:1;min-width:120px;"><strong>Nueva OC</strong></div>
+    <div class="flow-step" style="flex:1;min-width:120px;"><strong>Historial OC</strong></div>
+    <div class="flow-step alt" style="flex:1;min-width:120px;"><strong>Nueva Cotización</strong></div>
+    <div class="flow-step alt" style="flex:1;min-width:120px;"><strong>Historial Cot.</strong></div>
+    <div class="flow-step success" style="flex:1;min-width:120px;"><strong>Clientes</strong></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+    <div class="flow-step danger" style="flex:1;min-width:150px;"><strong>Administración</strong> <span class="badge badge-admin">Solo Admin</span></div>
+    <div class="flow-step" style="flex:1;min-width:150px;"><strong>Aprobaciones</strong> <span class="badge badge-val">Admin/Validador</span></div>
+  </div>
+</div>
+
+<h3>1.2 Flujo de Órdenes de Compra (OC)</h3>
+<div class="flow-box">
+  <div class="flow-step"><strong>1. Crear OC</strong> — Seleccionar proveedor, agregar ítems, calcular totales</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step"><strong>2. Vista OC</strong> — Documento imprimible con datos completos</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step" style="border-color:#ffc107;"><strong>3. Solicitar Aprobación</strong> — Envía a TODOS los validadores configurados</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step" style="border-color:#ffc107;">
+    <strong>4. Estado: EN REVISIÓN</strong><br>
+    Los validadores ven popup y acceden a "Mis Aprobaciones"
+  </div>
+  <div class="flow-arrow">▼</div>
+  <div style="display:flex;gap:8px;">
+    <div class="flow-step success" style="flex:1;"><strong>✓ Aprobar</strong><br>Si todos aprueban → OC Aprobada</div>
+    <div class="flow-step" style="flex:1;border-color:#ffc107;"><strong>✎ Corregir</strong><br>Devuelve para corrección</div>
+    <div class="flow-step danger" style="flex:1;"><strong>✗ Rechazar</strong><br>OC Rechazada</div>
+  </div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step success"><strong>5. Enviar Estado de Proceso</strong> — Notifica internamente a admin/validador</div>
+</div>
+
+<h3>1.3 Flujo de Cotizaciones</h3>
+<div class="flow-box">
+  <div class="flow-step alt"><strong>1. Crear Cotización</strong> — Seleccionar cliente, agregar ítems, condiciones</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step alt"><strong>2. Vista Cotización</strong> — Documento con términos y condiciones</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step" style="border-color:#ffc107;"><strong>3. Enviar Validación</strong> — Selecciona validadores específicos</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step" style="border-color:#ffc107;">
+    <strong>4. Estado: EN REVISIÓN</strong><br>
+    Popup automático para validadores asignados
+  </div>
+  <div class="flow-arrow">▼</div>
+  <div style="display:flex;gap:8px;">
+    <div class="flow-step success" style="flex:1;"><strong>✓ Aprobar</strong></div>
+    <div class="flow-step" style="flex:1;border-color:#ffc107;"><strong>✎ Corregir</strong></div>
+    <div class="flow-step danger" style="flex:1;"><strong>✗ Rechazar</strong></div>
+  </div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step success"><strong>5. Enviar Estado de Proceso</strong> — Notifica a admin/validador</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step alt"><strong>6. Seguimiento</strong> — Kanban de procesos, asociaciones entre cotizaciones</div>
+</div>
+
+<h3>1.4 Flujo de Aprobación (Detalle)</h3>
+<div class="flow-box">
+  <div class="flow-step"><strong>Usuario crea OC/Cotización</strong></div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step"><strong>Solicita Aprobación</strong> → Se crean registros en <code>oc_aprobaciones</code> / <code>cot_aprobaciones</code></div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step" style="border-color:#ffc107;"><strong>Popup Automático</strong> — Al navegar el sistema, el validador ve un modal con sus pendientes</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step"><strong>Validador accede a "Mis Aprobaciones"</strong> — Ve detalle, total, proveedor/cliente</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step"><strong>Toma decisión</strong> — Aprobar / Corregir / Rechazar (con comentario opcional)</div>
+  <div class="flow-arrow">▼</div>
+  <div class="flow-step success"><strong>Estado actualizado</strong> — Si todos aprueban → estado final "Aprobada"</div>
+</div>
+
+<h3>1.5 Flujo de Administración</h3>
+<div class="flow-box">
+  <div class="flow-step danger"><strong>Panel de Administración</strong> <span class="badge badge-admin">Solo Admin</span></div>
+  <div class="flow-arrow">▼</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div class="flow-step" style="flex:1;min-width:150px;"><strong>Gestión Usuarios</strong><br>Crear, eliminar, cambiar rol, editar correo, resetear contraseña</div>
+    <div class="flow-step" style="flex:1;min-width:150px;"><strong>Gestión Aprobadores</strong><br>Agregar/quitar validadores de OC</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECCIÓN 2: BASE DE DATOS -->
+<!-- ============================================ -->
+<h2 id="bdd">2. Base de Datos</h2>
+
+<h3>2.1 Información General</h3>
+<table>
+  <tr><th style="width:30%;">Motor</th><td>SQLite 3 (archivo local)</td></tr>
+  <tr><th>Archivo</th><td><code>ocdogroup.db</code></td></tr>
+  <tr><th>Acceso</th><td>PDO (PHP Data Objects)</td></tr>
+  <tr><th>Total de tablas</th><td>15 tablas</td></tr>
+</table>
+
+<h3>2.2 Diagrama de Relaciones</h3>
+<div class="flow-box" style="font-size:11px;">
+<pre style="font-family:Consolas,monospace;line-height:1.4;margin:0;">
+┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
+│   usuarios   │     │  ordenes_compra  │     │  cotizaciones│
+│──────────────│     │──────────────────│     │──────────────│
+│ id (PK)      │◄──┐ │ id (PK)          │  ┌─►│ id (PK)      │
+│ usuario      │   │ │ numero           │  │  │ numero       │
+│ nombre       │   │ │ proveedor_nombre │  │  │ cliente_nombre│
+│ email        │   │ │ estado           │  │  │ estado       │
+│ rol          │   │ │ total            │  │  │ total        │
+│ cargo        │   │ └────────┬─────────┘  │  └──────┬───────┘
+│ ci           │   │          │            │         │
+└──────┬───────┘   │          │            │         │
+       │           │    ┌─────┴─────┐      │   ┌─────┴──────┐
+       │           │    │ oc_items  │      │   │ cot_items  │
+       │           │    │ oc_id(FK) │      │   │ cot_id(FK) │
+       │           │    └───────────┘      │   └────────────┘
+       │           │          │            │         │
+       │           │    ┌─────┴──────────┐ │   ┌─────┴──────────┐
+       │           ├───►│oc_aprobaciones │ │   │cot_aprobaciones│◄─┐
+       │           │    │ oc_id(FK)      │ │   │ cot_id(FK)     │  │
+       │           │    │ usuario_id(FK) │ │   │ usuario_id(FK) │──┘
+       │           │    └────────────────┘ │   └────────────────┘
+       │           │          │            │         │
+       │           │    ┌─────┴──────────┐ │   ┌─────┴──────────┐
+       ├───────────┼───►│oc_notificaciones│ │   │cot_notificaciones│
+       │           │    │ oc_id(FK)      │ │   │ cot_id(FK)     │
+       │           │    │destinatario(FK)│ │   │destinatario(FK)│
+       │           │    └────────────────┘ │   └────────────────┘
+       │           │                       │         │
+       │           │    ┌────────────────┐ │   ┌─────┴──────┐
+       ├───────────┴───►│oc_aprobadores  │ │   │cot_procesos│
+       │                │usuario_id(FK)  │ │   │cot_id(FK)  │
+       │                └────────────────┘ │   └────────────┘
+       │                                   │         │
+       │           ┌────────────┐          │   ┌─────┴────────┐
+       │           │  clientes  │          │   │cot_asociaciones│
+       │           │ id (PK)    │          │   │cot_origen(FK)│
+       │           └────────────┘          │   │cot_destino(FK)│
+       │                                   │   └──────────────┘
+       │           ┌────────────┐          │
+       │           │ oc_envios  │          │   ┌────────────┐
+       │           │ oc_id(FK)  │          └───│ cot_envios │
+       │           └────────────┘              │ cot_id(FK) │
+                                               └────────────┘
+</pre>
+</div>
+
+<h3>2.3 Detalle de Tablas</h3>
+
+<h4>usuarios</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>Identificador único</td></tr>
+  <tr><td>usuario</td><td>TEXT</td><td>UNIQUE, NOT NULL</td><td>Nombre de usuario para login</td></tr>
+  <tr><td>clave</td><td>TEXT</td><td>NOT NULL</td><td>Hash de contraseña (password_hash)</td></tr>
+  <tr><td>nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre completo</td></tr>
+  <tr><td>ci</td><td>TEXT</td><td>Nullable</td><td>C.I. / RUT</td></tr>
+  <tr><td>cargo</td><td>TEXT</td><td>DEFAULT 'usuario'</td><td>Cargo en la empresa</td></tr>
+  <tr><td>rol</td><td>TEXT</td><td>NOT NULL, DEFAULT 'usuario'</td><td>'usuario' o 'admin'</td></tr>
+  <tr><td>email</td><td>TEXT</td><td>DEFAULT ''</td><td>Correo electrónico</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha de creación</td></tr>
+</table>
+
+<h4>ordenes_compra</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID único</td></tr>
+  <tr><td>numero</td><td>INTEGER</td><td>UNIQUE, NOT NULL</td><td>Número correlativo de OC</td></tr>
+  <tr><td>fecha</td><td>TEXT</td><td>NOT NULL</td><td>Fecha de la OC</td></tr>
+  <tr><td>proveedor_nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre del proveedor</td></tr>
+  <tr><td>proveedor_rut</td><td>TEXT</td><td>Nullable</td><td>RUT del proveedor</td></tr>
+  <tr><td>proveedor_direccion</td><td>TEXT</td><td>Nullable</td><td>Dirección</td></tr>
+  <tr><td>proveedor_ciudad</td><td>TEXT</td><td>Nullable</td><td>Ciudad</td></tr>
+  <tr><td>proveedor_fono</td><td>TEXT</td><td>Nullable</td><td>Teléfono</td></tr>
+  <tr><td>proveedor_correo</td><td>TEXT</td><td>Nullable</td><td>Correo del proveedor</td></tr>
+  <tr><td>proveedor_atencion</td><td>TEXT</td><td>Nullable</td><td>Atención de</td></tr>
+  <tr><td>obra</td><td>TEXT</td><td>Nullable</td><td>Nombre de la obra</td></tr>
+  <tr><td>moneda</td><td>TEXT</td><td>DEFAULT 'CLP'</td><td>Moneda (CLP, USD, UF)</td></tr>
+  <tr><td>cotizado_por</td><td>TEXT</td><td>Nullable</td><td>Quién cotizó</td></tr>
+  <tr><td>observaciones</td><td>TEXT</td><td>Nullable</td><td>Observaciones generales</td></tr>
+  <tr><td>plazo_entrega</td><td>TEXT</td><td>Nullable</td><td>Plazo de entrega</td></tr>
+  <tr><td>neto</td><td>REAL</td><td>DEFAULT 0</td><td>Monto neto</td></tr>
+  <tr><td>iva</td><td>REAL</td><td>DEFAULT 0</td><td>Monto IVA</td></tr>
+  <tr><td>total</td><td>REAL</td><td>DEFAULT 0</td><td>Total con IVA</td></tr>
+  <tr><td>estado</td><td>TEXT</td><td>DEFAULT 'pendiente'</td><td>pendiente/en_revision/aprobada/rechazada/corregir</td></tr>
+  <tr><td>preparada_por</td><td>TEXT</td><td>NOT NULL</td><td>Nombre de quien preparó</td></tr>
+  <tr><td>aprobada_por</td><td>TEXT</td><td>Nullable</td><td>Nombre del aprobador</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha registro</td></tr>
+</table>
+
+<h4>oc_items</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID del ítem</td></tr>
+  <tr><td>oc_id</td><td>INTEGER</td><td>FK → ordenes_compra(id) CASCADE</td><td>OC a la que pertenece</td></tr>
+  <tr><td>cantidad</td><td>REAL</td><td>DEFAULT 1</td><td>Cantidad solicitada</td></tr>
+  <tr><td>unidad</td><td>TEXT</td><td>DEFAULT 'Un'</td><td>Unidad de medida</td></tr>
+  <tr><td>descripcion</td><td>TEXT</td><td>NOT NULL</td><td>Descripción del producto</td></tr>
+  <tr><td>descuento</td><td>REAL</td><td>DEFAULT 0</td><td>Porcentaje de descuento</td></tr>
+  <tr><td>precio_unitario</td><td>REAL</td><td>DEFAULT 0</td><td>Precio por unidad</td></tr>
+  <tr><td>valor_total</td><td>REAL</td><td>DEFAULT 0</td><td>Total de la línea</td></tr>
+</table>
+
+<h4>cotizaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID único</td></tr>
+  <tr><td>numero</td><td>INTEGER</td><td>UNIQUE, NOT NULL</td><td>Número correlativo</td></tr>
+  <tr><td>fecha</td><td>TEXT</td><td>NOT NULL</td><td>Fecha de la cotización</td></tr>
+  <tr><td>valido_hasta</td><td>TEXT</td><td>Nullable</td><td>Fecha de validez</td></tr>
+  <tr><td>cliente_nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre del cliente</td></tr>
+  <tr><td>cliente_obra</td><td>TEXT</td><td>Nullable</td><td>Obra del cliente</td></tr>
+  <tr><td>cliente_rut</td><td>TEXT</td><td>Nullable</td><td>RUT del cliente</td></tr>
+  <tr><td>cliente_telefono</td><td>TEXT</td><td>Nullable</td><td>Teléfono</td></tr>
+  <tr><td>cliente_email</td><td>TEXT</td><td>Nullable</td><td>Correo del cliente</td></tr>
+  <tr><td>adicionales</td><td>TEXT</td><td>Nullable</td><td>Información adicional</td></tr>
+  <tr><td>condiciones</td><td>TEXT</td><td>Nullable</td><td>Condiciones comerciales</td></tr>
+  <tr><td>subtotal</td><td>REAL</td><td>DEFAULT 0</td><td>Subtotal neto</td></tr>
+  <tr><td>iva</td><td>REAL</td><td>DEFAULT 0</td><td>IVA</td></tr>
+  <tr><td>total</td><td>REAL</td><td>DEFAULT 0</td><td>Total</td></tr>
+  <tr><td>estado</td><td>TEXT</td><td>DEFAULT 'pendiente'</td><td>Estado de la cotización</td></tr>
+  <tr><td>creada_por</td><td>TEXT</td><td>NOT NULL</td><td>Creador</td></tr>
+  <tr><td>creada_por_telefono</td><td>TEXT</td><td>Nullable</td><td>Teléfono del creador</td></tr>
+  <tr><td>creada_por_email</td><td>TEXT</td><td>Nullable</td><td>Email del creador</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha registro</td></tr>
+</table>
+
+<h4>cot_items</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID del ítem</td></tr>
+  <tr><td>cot_id</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización padre</td></tr>
+  <tr><td>descripcion</td><td>TEXT</td><td>NOT NULL</td><td>Descripción del servicio/producto</td></tr>
+  <tr><td>detalle</td><td>TEXT</td><td>Nullable</td><td>Detalle adicional</td></tr>
+  <tr><td>cantidad</td><td>REAL</td><td>DEFAULT 1</td><td>Cantidad</td></tr>
+  <tr><td>unidad</td><td>TEXT</td><td>DEFAULT 'Un'</td><td>Unidad</td></tr>
+  <tr><td>precio</td><td>REAL</td><td>DEFAULT 0</td><td>Precio unitario</td></tr>
+  <tr><td>total</td><td>REAL</td><td>DEFAULT 0</td><td>Total línea</td></tr>
+</table>
+
+<h4>clientes</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre del cliente</td></tr>
+  <tr><td>rut</td><td>TEXT</td><td>Nullable</td><td>RUT</td></tr>
+  <tr><td>direccion</td><td>TEXT</td><td>Nullable</td><td>Dirección</td></tr>
+  <tr><td>ciudad</td><td>TEXT</td><td>Nullable</td><td>Ciudad</td></tr>
+  <tr><td>telefono</td><td>TEXT</td><td>Nullable</td><td>Teléfono</td></tr>
+  <tr><td>email</td><td>TEXT</td><td>Nullable</td><td>Correo</td></tr>
+  <tr><td>contacto</td><td>TEXT</td><td>Nullable</td><td>Persona de contacto</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha registro</td></tr>
+</table>
+
+<h4>oc_aprobadores</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>usuario_id</td><td>INTEGER</td><td>NOT NULL, UNIQUE, FK → usuarios(id)</td><td>Usuario validador</td></tr>
+  <tr><td>agregado_por</td><td>TEXT</td><td>NOT NULL</td><td>Quién lo agregó</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha de asignación</td></tr>
+</table>
+
+<h4>oc_aprobaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>oc_id</td><td>INTEGER</td><td>FK → ordenes_compra(id) CASCADE</td><td>OC asociada</td></tr>
+  <tr><td>usuario_id</td><td>INTEGER</td><td>FK → usuarios(id)</td><td>Validador asignado</td></tr>
+  <tr><td>nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre del validador</td></tr>
+  <tr><td>estado</td><td>TEXT</td><td>DEFAULT 'pendiente'</td><td>pendiente/aprobada/rechazada/corregir</td></tr>
+  <tr><td>comentario</td><td>TEXT</td><td>Nullable</td><td>Observación del validador</td></tr>
+  <tr><td>fecha_respuesta</td><td>DATETIME</td><td>Nullable</td><td>Cuándo respondió</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha asignación</td></tr>
+</table>
+
+<h4>cot_aprobaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>cot_id</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización asociada</td></tr>
+  <tr><td>usuario_id</td><td>INTEGER</td><td>FK → usuarios(id)</td><td>Validador</td></tr>
+  <tr><td>nombre</td><td>TEXT</td><td>NOT NULL</td><td>Nombre del validador</td></tr>
+  <tr><td>estado</td><td>TEXT</td><td>DEFAULT 'pendiente'</td><td>Estado de validación</td></tr>
+  <tr><td>comentario</td><td>TEXT</td><td>Nullable</td><td>Observación</td></tr>
+  <tr><td>fecha_respuesta</td><td>DATETIME</td><td>Nullable</td><td>Fecha respuesta</td></tr>
+  <tr><td>creado_en</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha creación</td></tr>
+</table>
+
+<h4>oc_notificaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>oc_id</td><td>INTEGER</td><td>FK → ordenes_compra(id) CASCADE</td><td>OC asociada</td></tr>
+  <tr><td>destinatario_id</td><td>INTEGER</td><td>FK → usuarios(id)</td><td>Destinatario</td></tr>
+  <tr><td>enviado_por</td><td>TEXT</td><td>NOT NULL</td><td>Quién envió</td></tr>
+  <tr><td>contenido</td><td>TEXT</td><td>DEFAULT 'proceso'</td><td>Tipo de contenido</td></tr>
+  <tr><td>leida</td><td>INTEGER</td><td>DEFAULT 0</td><td>0=no leída, 1=leída</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha envío</td></tr>
+</table>
+
+<h4>cot_notificaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>cot_id</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización</td></tr>
+  <tr><td>destinatario_id</td><td>INTEGER</td><td>FK → usuarios(id)</td><td>Destinatario</td></tr>
+  <tr><td>enviado_por</td><td>TEXT</td><td>NOT NULL</td><td>Emisor</td></tr>
+  <tr><td>contenido</td><td>TEXT</td><td>DEFAULT 'cotizacion'</td><td>Tipo contenido</td></tr>
+  <tr><td>leida</td><td>INTEGER</td><td>DEFAULT 0</td><td>Estado lectura</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha</td></tr>
+</table>
+
+<h4>oc_envios</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>oc_id</td><td>INTEGER</td><td>FK → ordenes_compra(id) CASCADE</td><td>OC enviada</td></tr>
+  <tr><td>enviado_por</td><td>TEXT</td><td>NOT NULL</td><td>Quién envió</td></tr>
+  <tr><td>destinatario_email</td><td>TEXT</td><td>NOT NULL</td><td>Email destino</td></tr>
+  <tr><td>destinatario_nombre</td><td>TEXT</td><td>Nullable</td><td>Nombre destino</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha envío</td></tr>
+</table>
+
+<h4>cot_envios</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>cot_id</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización</td></tr>
+  <tr><td>enviado_por</td><td>TEXT</td><td>NOT NULL</td><td>Emisor</td></tr>
+  <tr><td>destinatario_email</td><td>TEXT</td><td>NOT NULL</td><td>Email destino</td></tr>
+  <tr><td>destinatario_nombre</td><td>TEXT</td><td>Nullable</td><td>Nombre destino</td></tr>
+  <tr><td>contenido</td><td>TEXT</td><td>DEFAULT 'cotizacion'</td><td>Tipo</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha</td></tr>
+</table>
+
+<h4>cot_procesos</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>cot_id</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización</td></tr>
+  <tr><td>tipo</td><td>TEXT</td><td>NOT NULL</td><td>Tipo de proceso</td></tr>
+  <tr><td>titulo</td><td>TEXT</td><td>NOT NULL</td><td>Título del evento</td></tr>
+  <tr><td>descripcion</td><td>TEXT</td><td>Nullable</td><td>Descripción detallada</td></tr>
+  <tr><td>estado_proceso</td><td>TEXT</td><td>DEFAULT 'pendiente'</td><td>Estado del proceso</td></tr>
+  <tr><td>estado_anterior</td><td>TEXT</td><td>Nullable</td><td>Estado antes del cambio</td></tr>
+  <tr><td>estado_nuevo</td><td>TEXT</td><td>Nullable</td><td>Estado después del cambio</td></tr>
+  <tr><td>usuario</td><td>TEXT</td><td>NOT NULL</td><td>Quién registró</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha</td></tr>
+</table>
+
+<h4>cot_asociaciones</h4>
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Restricciones</th><th>Descripción</th></tr>
+  <tr><td>id</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td><td>ID</td></tr>
+  <tr><td>cot_id_origen</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización origen</td></tr>
+  <tr><td>cot_id_destino</td><td>INTEGER</td><td>FK → cotizaciones(id) CASCADE</td><td>Cotización destino</td></tr>
+  <tr><td>tipo</td><td>TEXT</td><td>DEFAULT 'relacionada'</td><td>Tipo de relación</td></tr>
+  <tr><td>nota</td><td>TEXT</td><td>Nullable</td><td>Nota</td></tr>
+  <tr><td>usuario</td><td>TEXT</td><td>NOT NULL</td><td>Quién asoció</td></tr>
+  <tr><td>fecha</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Fecha</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- SECCIÓN 3: FUNCIONES DEL SISTEMA -->
+<!-- ============================================ -->
+<h2 id="funciones">3. Funciones del Sistema</h2>
+
+<h3>3.1 Archivos PHP y sus Responsabilidades</h3>
+<table>
+  <tr><th>Archivo</th><th>Descripción</th><th>Acceso</th></tr>
+  <tr><td><code>config.php</code></td><td>Conexión BD, esquema, sesión, funciones helper</td><td>Todos</td></tr>
+  <tr><td><code>login.php</code></td><td>Autenticación de usuario</td><td>Público</td></tr>
+  <tr><td><code>logout.php</code></td><td>Cerrar sesión</td><td>Autenticado</td></tr>
+  <tr><td><code>index.php</code></td><td>Crear nueva Orden de Compra</td><td>Autenticado</td></tr>
+  <tr><td><code>cotizacion.php</code></td><td>Crear nueva Cotización</td><td>Autenticado</td></tr>
+  <tr><td><code>historial.php</code></td><td>Listado y filtro de OC</td><td>Autenticado</td></tr>
+  <tr><td><code>historial_cotizaciones.php</code></td><td>Listado y filtro de cotizaciones</td><td>Autenticado</td></tr>
+  <tr><td><code>ver.php</code></td><td>Vista imprimible de OC + aprobaciones</td><td>Autenticado</td></tr>
+  <tr><td><code>ver_cotizacion.php</code></td><td>Vista imprimible de cotización + validación</td><td>Autenticado</td></tr>
+  <tr><td><code>solicitar_aprobacion.php</code></td><td>Enviar OC a validadores</td><td>Autenticado</td></tr>
+  <tr><td><code>solicitar_aprobacion_cot.php</code></td><td>Enviar cotización a validadores</td><td>Autenticado</td></tr>
+  <tr><td><code>mis_aprobaciones.php</code></td><td>Bandeja de aprobaciones y notificaciones</td><td>Admin / Validador</td></tr>
+  <tr><td><code>enviar_oc_admin.php</code></td><td>Enviar estado OC al perfil de un usuario</td><td>Autenticado</td></tr>
+  <tr><td><code>enviar_cot_admin.php</code></td><td>Enviar estado cotización al perfil</td><td>Autenticado</td></tr>
+  <tr><td><code>seguimiento_cot.php</code></td><td>Seguimiento y procesos de cotización</td><td>Autenticado</td></tr>
+  <tr><td><code>clientes.php</code></td><td>ABM de clientes</td><td>Autenticado</td></tr>
+  <tr><td><code>api_clientes.php</code></td><td>API JSON para selector de clientes</td><td>Autenticado</td></tr>
+  <tr><td><code>admin.php</code></td><td>Gestión de usuarios y aprobadores</td><td>Solo Admin</td></tr>
+</table>
+
+<h3>3.2 Funciones PHP Definidas</h3>
+
+<h4>config.php</h4>
+<table>
+  <tr><th>Función</th><th>Parámetros</th><th>Descripción</th></tr>
+  <tr><td><code>requireAuth()</code></td><td>Ninguno</td><td>Verifica sesión activa. Si no hay usuario, redirige a login.php</td></tr>
+  <tr><td><code>requireAdmin()</code></td><td>Ninguno</td><td>Verifica que el usuario sea administrador. Si no, redirige a index.php</td></tr>
+  <tr><td><code>siguienteNumeroOC($pdo)</code></td><td>$pdo: conexión PDO</td><td>Retorna el siguiente número correlativo de OC (base 4174)</td></tr>
+  <tr><td><code>siguienteNumeroCot($pdo)</code></td><td>$pdo: conexión PDO</td><td>Retorna el siguiente número de cotización (base 1149)</td></tr>
+  <tr><td><code>formatCLP($v)</code></td><td>$v: valor numérico</td><td>Formatea número con separador de miles estilo chileno</td></tr>
+</table>
+
+<h4>email_functions.php</h4>
+<table>
+  <tr><th>Función</th><th>Parámetros</th><th>Descripción</th></tr>
+  <tr><td><code>enviarOCPorCorreo()</code></td><td>$pdo, $oc, $items, $email, $nombre</td><td>Envía OC completa por correo electrónico al proveedor</td></tr>
+  <tr><td><code>enviarCotPorCorreo()</code></td><td>$pdo, $cot, $items, $email, $nombre, $contenido</td><td>Envía cotización (vista previa o proceso) por correo</td></tr>
+  <tr><td><code>generarEmailCotizacion()</code></td><td>$cot, $items</td><td>Genera cuerpo HTML de cotización para correo</td></tr>
+  <tr><td><code>generarEmailProcesoCot()</code></td><td>$pdo, $cot, $items</td><td>Genera HTML del estado de proceso para correo</td></tr>
+  <tr><td><code>enviarNotifValidadorOC()</code></td><td>$pdo, $oc, $email, $nombre</td><td>Envía notificación de OC pendiente a validador</td></tr>
+  <tr><td><code>enviarNotifValidadorCot()</code></td><td>$pdo, $cot, $email, $nombre</td><td>Envía notificación de cotización pendiente a validador</td></tr>
+</table>
+
+<h3>3.3 Sistema de Roles y Permisos</h3>
+<table>
+  <tr><th>Funcionalidad</th><th>Usuario</th><th>Administrador</th><th>Validador</th></tr>
+  <tr><td>Crear OC / Cotización</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Ver historial</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Solicitar aprobación</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Enviar estado de proceso</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Aprobar / Rechazar / Corregir</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Ver "Mis Aprobaciones"</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+  <tr><td>Eliminar OC / Cotizaciones</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:red;">&#10007;</td></tr>
+  <tr><td>Gestión de usuarios</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:red;">&#10007;</td></tr>
+  <tr><td>Gestión de aprobadores</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:red;">&#10007;</td></tr>
+  <tr><td>Cambiar roles de usuarios</td><td style="text-align:center;color:red;">&#10007;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:red;">&#10007;</td></tr>
+  <tr><td>Gestión de clientes</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td><td style="text-align:center;color:green;">&#10003;</td></tr>
+</table>
+
+<h3>3.4 Estados del Sistema</h3>
+
+<h4>Estados de Órdenes de Compra</h4>
+<table>
+  <tr><th>Estado</th><th>Descripción</th><th>Transición</th></tr>
+  <tr><td style="background:#6c757d;color:#fff;">pendiente</td><td>OC recién creada, sin enviar a validación</td><td>→ en_revision</td></tr>
+  <tr><td style="background:#0dcaf0;color:#000;">en_revision</td><td>Enviada a validadores, esperando respuesta</td><td>→ aprobada / rechazada / corregir</td></tr>
+  <tr><td style="background:#198754;color:#fff;">aprobada</td><td>Todos los validadores aprobaron</td><td>Estado final</td></tr>
+  <tr><td style="background:#dc3545;color:#fff;">rechazada</td><td>Al menos un validador rechazó</td><td>Estado final</td></tr>
+  <tr><td style="background:#ffc107;color:#000;">corregir</td><td>Se solicitaron correcciones</td><td>→ en_revision (reenvío)</td></tr>
+</table>
+
+<h4>Estados de Cotizaciones</h4>
+<table>
+  <tr><th>Estado</th><th>Descripción</th></tr>
+  <tr><td style="background:#6c757d;color:#fff;">pendiente</td><td>Cotización creada sin validar</td></tr>
+  <tr><td style="background:#0dcaf0;color:#000;">en_revision</td><td>En proceso de validación</td></tr>
+  <tr><td style="background:#198754;color:#fff;">aprobada</td><td>Validada y aprobada</td></tr>
+  <tr><td style="background:#dc3545;color:#fff;">rechazada</td><td>Rechazada por validador</td></tr>
+  <tr><td style="background:#ffc107;color:#000;">corregir</td><td>Requiere correcciones</td></tr>
+  <tr><td style="background:#0d6efd;color:#fff;">propuesta</td><td>En estado de propuesta</td></tr>
+  <tr><td style="background:#0d6efd;color:#fff;">negociacion</td><td>En negociación con el cliente</td></tr>
+  <tr><td style="background:#198754;color:#fff;">adjudicada</td><td>Cotización adjudicada/ganada</td></tr>
+  <tr><td style="background:#6c757d;color:#fff;">desierta</td><td>Sin adjudicación</td></tr>
+  <tr><td style="background:#212529;color:#fff;">cerrado</td><td>Proceso finalizado</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- SECCIÓN 4: MANUAL DE USUARIO -->
+<!-- ============================================ -->
+<h2 id="manual">4. Manual de Usuario</h2>
+
+<h3>4.1 Acceso al Sistema</h3>
+<ol>
+  <li>Abra su navegador web e ingrese la dirección del sistema: <code>http://localhost:8000</code></li>
+  <li>Ingrese su <strong>usuario</strong> y <strong>contraseña</strong></li>
+  <li>Presione <strong>"Ingresar"</strong></li>
+</ol>
+<div class="note">
+  <strong>Credenciales por defecto del administrador:</strong><br>
+  Usuario: <code>admin</code> | Contraseña: <code>admin123</code><br>
+  Se recomienda cambiar la contraseña después del primer ingreso.
+</div>
+
+<h3>4.2 Menú Principal</h3>
+<p>El menú lateral izquierdo contiene las siguientes opciones:</p>
+<table>
+  <tr><th>Opción</th><th>Icono</th><th>Descripción</th><th>Acceso</th></tr>
+  <tr><td>Aprobaciones</td><td>Campana</td><td>Bandeja de validaciones pendientes (con badge de conteo)</td><td>Admin / Validador</td></tr>
+  <tr><td>Nueva OC</td><td>Documento +</td><td>Crear una nueva Orden de Compra</td><td>Todos</td></tr>
+  <tr><td>Historial OC</td><td>Reloj</td><td>Ver todas las Órdenes de Compra creadas</td><td>Todos</td></tr>
+  <tr><td>Nueva Cotización</td><td>Recibo</td><td>Crear una nueva Cotización</td><td>Todos</td></tr>
+  <tr><td>Historial Cot.</td><td>Diario</td><td>Ver todas las Cotizaciones creadas</td><td>Todos</td></tr>
+  <tr><td>Clientes</td><td>Personas</td><td>Gestionar base de datos de clientes</td><td>Todos</td></tr>
+  <tr><td>Administración</td><td>Engranaje</td><td>Gestionar usuarios y aprobadores</td><td>Solo Admin</td></tr>
+</table>
+
+<h3>4.3 Crear una Orden de Compra</h3>
+<ol>
+  <li>Haga clic en <strong>"Nueva OC"</strong> en el menú lateral</li>
+  <li>Complete los datos del <strong>proveedor</strong>: nombre, RUT, dirección, ciudad, teléfono, correo, atención</li>
+  <li>Ingrese la <strong>obra</strong>, <strong>moneda</strong>, <strong>cotizado por</strong></li>
+  <li>Agregue los <strong>ítems</strong>:
+    <ul>
+      <li>Cantidad y unidad</li>
+      <li>Descripción del producto/servicio</li>
+      <li>Porcentaje de descuento (si aplica)</li>
+      <li>Precio unitario</li>
+    </ul>
+  </li>
+  <li>Use el botón <strong>"+ Agregar Ítem"</strong> para más líneas</li>
+  <li>Agregue <strong>observaciones</strong> y <strong>plazo de entrega</strong></li>
+  <li>Presione <strong>"Crear Orden de Compra"</strong></li>
+  <li>Se mostrará la OC en formato imprimible</li>
+</ol>
+
+<h3>4.4 Crear una Cotización</h3>
+<ol>
+  <li>Haga clic en <strong>"Nueva Cotización"</strong></li>
+  <li>Seleccione o ingrese los datos del <strong>cliente</strong> (puede usar el buscador de clientes guardados)</li>
+  <li>Agregue los <strong>ítems cotizados</strong> con descripción, detalle, cantidad, unidad y precio</li>
+  <li>Complete las <strong>condiciones comerciales</strong> e <strong>información adicional</strong></li>
+  <li>Presione <strong>"Crear Cotización"</strong></li>
+</ol>
+
+<h3>4.5 Solicitar Aprobación / Validación</h3>
+
+<h4>Para Órdenes de Compra:</h4>
+<ol>
+  <li>Abra la OC desde el historial o después de crearla</li>
+  <li>Presione el botón <strong>"Solicitar Aprobación"</strong> (amarillo)</li>
+  <li>Confirme la acción</li>
+  <li>La OC cambiará a estado <strong>"En Revisión"</strong></li>
+  <li>Se notificará a <strong>todos los validadores configurados</strong></li>
+</ol>
+
+<h4>Para Cotizaciones:</h4>
+<ol>
+  <li>Abra la cotización</li>
+  <li>Presione <strong>"Enviar Validación"</strong> (amarillo)</li>
+  <li>Seleccione los <strong>validadores específicos</strong> que desea asignar</li>
+  <li>Presione <strong>"Enviar"</strong></li>
+</ol>
+
+<h3>4.6 Aprobar, Corregir o Rechazar</h3>
+<p>Cuando un validador ingresa al sistema con aprobaciones pendientes:</p>
+<ol>
+  <li>Aparece un <strong>popup automático</strong> informando las validaciones pendientes</li>
+  <li>Puede ir a <strong>"Mis Aprobaciones"</strong> desde el popup o el menú lateral</li>
+  <li>En cada OC/Cotización pendiente verá:
+    <ul>
+      <li>Resumen con datos del documento (proveedor/cliente, monto, obra)</li>
+      <li>Enlace para <strong>ver el documento completo</strong></li>
+      <li>Campo para agregar un <strong>comentario/observación</strong></li>
+      <li>Tres botones de decisión: <strong>Aprobar</strong> (verde), <strong>Corregir</strong> (amarillo), <strong>Rechazar</strong> (rojo)</li>
+    </ul>
+  </li>
+  <li>Al tomar una decisión:
+    <ul>
+      <li><strong>Si todos aprueban:</strong> El documento pasa a estado "Aprobada"</li>
+      <li><strong>Si alguien solicita corrección:</strong> Vuelve a "Corregir" y puede reenviarse</li>
+      <li><strong>Si alguien rechaza:</strong> El documento pasa a "Rechazada"</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>4.7 Enviar Estado de Proceso</h3>
+<ol>
+  <li>Desde la vista de una OC o Cotización, presione <strong>"Enviar Estado de Proceso"</strong> (verde)</li>
+  <li>Seleccione el <strong>destinatario</strong> (admin o validador) del listado</li>
+  <li>Presione <strong>"Enviar"</strong></li>
+  <li>El destinatario verá la notificación en su bandeja de <strong>"Mis Aprobaciones"</strong></li>
+  <li>Podrá ver el documento y marcar como leída la notificación</li>
+</ol>
+
+<h3>4.8 Seguimiento de Cotizaciones</h3>
+<ol>
+  <li>Acceda al seguimiento desde el historial de cotizaciones (botón <strong>"Seguimiento"</strong>)</li>
+  <li>Puede <strong>cambiar el estado</strong> de la cotización (propuesta, negociación, adjudicada, etc.)</li>
+  <li>Puede <strong>registrar procesos</strong>: reuniones, llamadas, documentos</li>
+  <li>Puede <strong>asociar cotizaciones</strong> entre sí (versiones, relacionadas)</li>
+</ol>
+
+<h3>4.9 Gestión de Clientes</h3>
+<ol>
+  <li>Acceda a <strong>"Clientes"</strong> desde el menú</li>
+  <li>Puede <strong>buscar</strong> clientes existentes por nombre</li>
+  <li>Puede <strong>crear</strong> nuevos clientes con: nombre, RUT, dirección, ciudad, teléfono, email, contacto</li>
+  <li>Puede <strong>editar</strong> o <strong>eliminar</strong> clientes existentes</li>
+  <li>Los clientes quedan disponibles como autocompletado al crear cotizaciones</li>
+</ol>
+
+<h3>4.10 Imprimir / Exportar a PDF</h3>
+<ol>
+  <li>Desde la vista de OC o Cotización, seleccione el tamaño de papel: <strong>Carta</strong> u <strong>Oficio</strong></li>
+  <li>Presione <strong>"Imprimir / PDF"</strong></li>
+  <li>En el diálogo de impresión del navegador:
+    <ul>
+      <li>Para imprimir: seleccione su impresora</li>
+      <li>Para PDF: seleccione <strong>"Guardar como PDF"</strong> como destino</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>4.11 Administración (Solo Administradores)</h3>
+
+<h4>Gestión de Usuarios:</h4>
+<ul>
+  <li><strong>Crear usuario:</strong> Complete usuario, nombre, C.I., cargo, correo, contraseña y rol</li>
+  <li><strong>Cambiar rol:</strong> Use el desplegable en la tabla para cambiar entre Usuario y Administrador</li>
+  <li><strong>Editar correo:</strong> Escriba el correo directamente en el campo de la tabla y presione el check verde</li>
+  <li><strong>Resetear contraseña:</strong> Botón de llave amarilla → ingrese nueva contraseña</li>
+  <li><strong>Eliminar usuario:</strong> Botón rojo de papelera (no puede eliminarse a sí mismo)</li>
+</ul>
+
+<h4>Gestión de Aprobadores:</h4>
+<ul>
+  <li><strong>Agregar aprobador:</strong> Seleccione un usuario del listado y presione "Agregar"</li>
+  <li><strong>Quitar aprobador:</strong> Presione la X roja junto al nombre del aprobador</li>
+  <li>Los aprobadores son los usuarios que validan las OC y Cotizaciones</li>
+</ul>
+
+<h3>4.12 Notificaciones del Sistema</h3>
+<table>
+  <tr><th>Tipo</th><th>Cómo se muestra</th><th>Descripción</th></tr>
+  <tr><td>Popup de pendientes</td><td>Modal automático al cargar página</td><td>Informa al validador sobre OC/Cotizaciones que esperan su decisión</td></tr>
+  <tr><td>Badge en menú</td><td>Número rojo junto a "Aprobaciones"</td><td>Cuenta total de pendientes + notificaciones sin leer</td></tr>
+  <tr><td>Estado de proceso</td><td>Sección en "Mis Aprobaciones"</td><td>OC/Cotizaciones enviadas al perfil del usuario</td></tr>
+</table>
+
+<div style="text-align:center;margin-top:40px;padding:20px;border-top:2px solid #1a1a2e;">
+  <p style="font-size:14px;color:#1a1a2e;"><strong>Sistema DOGroup — Documentación Técnica</strong></p>
+  <p style="font-size:11px;color:#999;">INMOBILIARIA E INVERSIONES DON ORLANDO SPA — 77.930.045-5<br>Generado: Abril 2026</p>
+</div>
+
+</body>
+</html>

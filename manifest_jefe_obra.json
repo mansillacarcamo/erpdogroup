@@ -1,0 +1,18 @@
+{
+  "name": "Jefe de Obra",
+  "short_name": "Jefe Obra",
+  "description": "Portal Jefe de Obra · Doble validación de tickets",
+  "start_url": "./jefe_obra_login.php",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15803d",
+  "theme_color": "#15803d",
+  "lang": "es-CL",
+  "icons": [
+    { "src": "favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

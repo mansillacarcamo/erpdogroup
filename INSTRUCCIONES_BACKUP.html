@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Instrucciones de Backup — DoGroup</title>
+<style>
+  @page { size: A4; margin: 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    color: #222;
+    max-width: 780px;
+    margin: 24px auto;
+    padding: 0 24px;
+  }
+  h1 {
+    font-size: 20pt;
+    color: #b91c1c;
+    border-bottom: 3px solid #b91c1c;
+    padding-bottom: 6px;
+    margin: 0 0 4px;
+  }
+  h2 {
+    font-size: 14pt;
+    color: #b91c1c;
+    margin-top: 22px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+  h3 { font-size: 12pt; margin-top: 16px; margin-bottom: 4px; }
+  p { margin: 6px 0; }
+  .meta { color: #666; font-size: 9.5pt; margin-bottom: 16px; }
+  ul, ol { padding-left: 22px; margin: 6px 0 10px; }
+  li { margin-bottom: 4px; }
+  code, pre {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9.5pt;
+  }
+  code {
+    background: #f3f4f6;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #e5e7eb;
+  }
+  pre {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 10px 12px;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 6px 0 12px;
+  }
+  .nota {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin: 10px 0;
+  }
+  .alerta {
+    background: #fef2f2;
+    border-left: 4px solid #b91c1c;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin: 10px 0;
+  }
+  .ok {
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin: 10px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f4f6; }
+  .btn-print {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #b91c1c;
+    color: #fff;
+    border: 0;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 11pt;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  @media print {
+    .btn-print { display: none; }
+    body { margin: 0; padding: 0; }
+    h2 { page-break-after: avoid; }
+    pre, table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<button class="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+
+<h1>Sistema de Backup Automatico — DoGroup</h1>
+<p class="meta">Documento de instrucciones para administrar la copia de seguridad del sistema. Version 1.0</p>
+
+<h2>1. Que respalda el sistema</h2>
+<p>El backup guarda la informacion critica del sistema en un archivo <code>.zip</code> dentro de la carpeta <code>backups/</code> del proyecto:</p>
+<ul>
+  <li><strong>controlgastos.db</strong> — base principal (gastos, OC, cotizaciones, usuarios, obras, clientes, proveedores).</li>
+  <li><strong>ocdogroup.db</strong> — base secundaria del modulo OC.</li>
+  <li><strong>ocdogroup/ocdogroup.db</strong> — copia del subsistema.</li>
+  <li><strong>uploads/</strong> — todos los adjuntos: comprobantes de gastos, archivos asociados a OC, etc.</li>
+</ul>
+<div class="ok">El backup mantiene los ultimos <strong>12 archivos</strong> automaticamente. Si corre cada 5 dias, equivale a unos 60 dias de historial.</div>
+
+<h2>2. Archivos del sistema de backup</h2>
+<table>
+  <tr><th>Archivo</th><th>Funcion</th></tr>
+  <tr><td><code>backup_auto.ps1</code></td><td>Script PowerShell que crea el .zip. Lo ejecuta el Programador de Tareas cada 5 dias.</td></tr>
+  <tr><td><code>restaurar.ps1</code></td><td>Script manual para restaurar un backup. Lo ejecutas vos cuando hace falta.</td></tr>
+  <tr><td><code>backups/backup.log</code></td><td>Historial de cuando corrio el backup, exito o error.</td></tr>
+  <tr><td><code>backups/backup_*.zip</code></td><td>Cada archivo .zip es una copia completa con fecha y hora.</td></tr>
+</table>
+
+<h2>3. Activar el backup automatico (una sola vez)</h2>
+<ol>
+  <li>Abrir <strong>PowerShell como Administrador</strong>:
+    <ul>
+      <li>Tecla Windows -> escribir "powershell" -> click derecho -> "Ejecutar como administrador".</li>
+    </ul>
+  </li>
+  <li>Pegar y ejecutar este comando (todo en una sola linea):</li>
+</ol>
+<pre>schtasks /Create /TN "DoGroup_Backup" /SC DAILY /MO 5 /ST 02:00 /RL HIGHEST /F /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"C:\Users\INGENIERIA SISTEMAS\Desktop\dogroupsistema\backup_auto.ps1`""</pre>
+<p>Listo. La tarea queda registrada en el Programador de Tareas de Windows y se ejecuta sola cada 5 dias a las <strong>02:00 AM</strong>.</p>
+<div class="nota">Si la PC esta apagada a las 02:00, Windows ejecuta el backup la proxima vez que la enciendas.</div>
+
+<h2>4. Comandos utiles para administrar la tarea</h2>
+<table>
+  <tr><th>Que necesitas</th><th>Comando</th></tr>
+  <tr><td>Ver si la tarea existe y cuando correra</td>
+      <td><code>schtasks /Query /TN "DoGroup_Backup" /V /FO LIST</code></td></tr>
+  <tr><td>Ejecutar el backup ahora mismo (prueba)</td>
+      <td><code>schtasks /Run /TN "DoGroup_Backup"</code></td></tr>
+  <tr><td>Eliminar la tarea programada</td>
+      <td><code>schtasks /Delete /TN "DoGroup_Backup" /F</code></td></tr>
+  <tr><td>Cambiar la frecuencia (ej. cada 7 dias)</td>
+      <td>Volver a ejecutar el comando del paso 3 cambiando <code>/MO 5</code> por <code>/MO 7</code>.</td></tr>
+</table>
+
+<h2>5. Restaurar un backup</h2>
+<div class="alerta"><strong>IMPORTANTE:</strong> antes de restaurar, detener el servidor (Laragon -> "Stop All"). Si Apache esta sirviendo el sistema mientras se sobrescribe la base de datos, la base se puede corromper.</div>
+
+<ol>
+  <li>Abrir <strong>PowerShell</strong> (no necesita ser administrador).</li>
+  <li>Ejecutar:</li>
+</ol>
+<pre>powershell -ExecutionPolicy Bypass -File "C:\Users\INGENIERIA SISTEMAS\Desktop\dogroupsistema\restaurar.ps1"</pre>
+
+<p>El script:</p>
+<ol>
+  <li>Muestra una lista numerada con todos los backups disponibles, ordenados del mas reciente al mas antiguo (con fecha, hora y tamano).</li>
+  <li>Te pide elegir cual restaurar. Si presionas Enter sin numero, restaura el mas reciente.</li>
+  <li>Te pide escribir <code>SI</code> en mayusculas para confirmar.</li>
+  <li><strong>Antes de sobrescribir</strong>, guarda los archivos actuales en <code>backups/_pre_restore_&lt;fecha&gt;/</code> por si querias revertir.</li>
+  <li>Descomprime el .zip elegido y restaura las bases <code>.db</code> y la carpeta <code>uploads/</code>.</li>
+</ol>
+
+<p>Cuando termina, volver a iniciar el servidor (Laragon -> "Start All").</p>
+
+<h2>6. Que NO hacer</h2>
+<ul>
+  <li><strong>No</strong> borrar manualmente archivos <code>.zip</code> de <code>backups/</code> a menos que la carpeta este saturada y no quepan mas. El script ya elimina solo los antiguos cuando supera 12.</li>
+  <li><strong>No</strong> editar archivos <code>.db</code> con un editor de texto. Son binarios, se corrompen.</li>
+  <li><strong>No</strong> apagar la PC justo a las 02:00 si tenes corriendo el backup; esperar a que termine (suele tardar pocos segundos).</li>
+  <li><strong>No</strong> mover los archivos <code>backup_auto.ps1</code> ni <code>restaurar.ps1</code> de la raiz del proyecto: la tarea programada apunta a esa ruta.</li>
+</ul>
+
+<h2>7. Recomendacion de respaldo externo</h2>
+<div class="ok">
+  Una vez al mes, copiar el <code>.zip</code> mas reciente de <code>backups/</code> a un <strong>pendrive</strong> o disco externo.
+  El backup local protege contra borrados accidentales y errores de software, pero no protege contra robo, incendio o falla del disco duro.
+  Una copia externa cierra ese riesgo.
+</div>
+
+<h2>8. Verificacion periodica</h2>
+<p>Cada cierto tiempo (recomendado: una vez al mes) abrir <code>backups/backup.log</code> con el Bloc de Notas y verificar:</p>
+<ul>
+  <li>Que las ultimas lineas sean <code>Backup OK</code> y no <code>ERROR</code>.</li>
+  <li>Que la fecha del ultimo backup sea reciente.</li>
+  <li>Que la cantidad de <code>.zip</code> en <code>backups/</code> no este creciendo sin control (deberian quedarse en 12).</li>
+</ul>
+
+<h2>9. Notificacion por correo</h2>
+<p>Despues de cada backup automatico, el sistema envia un correo a:</p>
+<pre>deptoinformatica@dogroup.cl</pre>
+<p>El correo incluye:</p>
+<ul>
+  <li><strong>Estado:</strong> OK (verde) o ERROR (rojo).</li>
+  <li><strong>Fecha y hora</strong> en que corrio el backup.</li>
+  <li><strong>Nombre del archivo .zip</strong> generado.</li>
+  <li><strong>Tamano</strong> del archivo en MB.</li>
+  <li>Si hubo error, el <strong>mensaje del error</strong>.</li>
+</ul>
+<div class="alerta">
+  Para que el correo funcione, el archivo <code>smtp_config.php</code> debe estar configurado con un servidor SMTP real (host, usuario y contrasena).
+  Si el archivo todavia tiene los valores por defecto, completar antes de activar el backup automatico.
+</div>
+<p>Componentes involucrados:</p>
+<table>
+  <tr><th>Archivo</th><th>Funcion</th></tr>
+  <tr><td><code>smtp_config.php</code></td><td>Servidor SMTP, usuario, contrasena.</td></tr>
+  <tr><td><code>backup_email.php</code></td><td>Script PHP que arma y envia el correo via PHPMailer.</td></tr>
+  <tr><td><code>backup_auto.ps1</code></td><td>Llama al script PHP al final de cada backup, pasandole el estado.</td></tr>
+</table>
+<p>Si el correo no llega, revisar:</p>
+<ul>
+  <li>Que <code>backup.log</code> diga "Notificacion enviada" en la ultima ejecucion.</li>
+  <li>Que <code>php.exe</code> este disponible en el PATH o en <code>C:\laragon\bin\php\</code>.</li>
+  <li>Que la carpeta de spam del correo destino no haya filtrado el mensaje.</li>
+  <li>Que las credenciales de <code>smtp_config.php</code> sean validas.</li>
+</ul>
+
+<h2>10. Como guardar este documento como PDF</h2>
+<ol>
+  <li>Hacer click en el boton rojo <strong>"Imprimir / Guardar PDF"</strong> arriba a la derecha de esta pagina.</li>
+  <li>En la ventana de impresion del navegador, en <em>Destino / Impresora</em> elegir <strong>"Guardar como PDF"</strong> (Chrome / Edge) o <strong>"Microsoft Print to PDF"</strong>.</li>
+  <li>Hacer click en <em>Guardar</em> y elegir donde dejar el archivo.</li>
+</ol>
+
+</body>
+</html>

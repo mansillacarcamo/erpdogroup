@@ -1,0 +1,54 @@
+# ============================================================
+# .htaccess raíz — DOGroup
+# Protege archivos sensibles cuando el dominio apunta al repo
+# ============================================================
+
+# No listar directorios + permitir seguir symlinks
+Options -Indexes +FollowSymLinks
+
+# Documento por defecto
+DirectoryIndex index.php login.php
+
+# ── Bloquear acceso a .git, .gitignore, .cpanel.yml, etc. ──
+RedirectMatch 404 /\.git
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear bases de datos SQLite ──
+<FilesMatch "\.(db|sqlite|sqlite3|db-journal|db-shm|db-wal)$">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear configuración con secretos ──
+<FilesMatch "^(smtp_config\.php|smtp_config\.local\.php|config\.local\.php)$">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear archivos de Composer ──
+<FilesMatch "^(composer\.(json|lock|phar)|composer-setup\.php)$">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear scripts de instalación / docs internos ──
+<FilesMatch "\.(md|txt|ps1|bat)$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^(INSTALACION_|INSTRUCCIONES_|LEER_|DOCUMENTACION_|README|_commitmsg)">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear endpoints de debug ──
+<FilesMatch "^(debug|test_error|diagnostico|fix_perms|_generate_icons)\.php$">
+  Require all denied
+</FilesMatch>
+
+# ── Bloquear acceso directo a migrations/ y vendor/ ──
+RedirectMatch 404 ^/migrations(/|$)
+RedirectMatch 404 ^/vendor(/.*\.php)?$
+
+# ── Forzar HTTPS (opcional, si tu hosting tiene SSL) ──
+# Descomenta si quieres redirección automática:
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

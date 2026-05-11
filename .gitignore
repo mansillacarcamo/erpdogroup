@@ -1,0 +1,66 @@
+# ============================================================
+#  .gitignore — DOGroup ERP
+# ============================================================
+
+# ── Secretos / config local ─────────────────────────────────
+smtp_config.php
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+
+# ── Base de datos SQLite (datos reales) ─────────────────────
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ── Backups de BD ───────────────────────────────────────────
+backups/
+backup_*.sql
+backup_*.zip
+
+# ── Archivos subidos por usuarios ───────────────────────────
+uploads/
+
+# ── Dependencias regenerables ───────────────────────────────
+vendor/
+node_modules/
+composer.lock
+
+# ── Logs ────────────────────────────────────────────────────
+*.log
+logs/
+error_log
+
+# ── Cache / temp ────────────────────────────────────────────
+cache/
+tmp/
+.cache/
+*.tmp
+*.bak
+
+# ── Editor / IDE ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Artefactos de despliegue ────────────────────────────────
+deploy_*.zip
+update_*.zip
+diag500.php
+
+# ── Diagnóstico / herramientas locales con tokens ───────────
+tools/fix_routing_benza.php

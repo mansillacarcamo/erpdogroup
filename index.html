@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta http-equiv="refresh" content="0; url=index.php">
+  <title>DOGroup · Cargando...</title>
+  <script>
+  // Limpieza preventiva de Service Workers obsoletos antes de redirigir.
+  // Si hay un SW viejo (de una version anterior del sistema o de gastos_diarios
+  // con scope incorrecto), se desregistra y se borran sus caches.
+  (async function(){
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) {
+          // Solo desregistrar SW del scope raiz del sistema principal.
+          // No tocar el SW de /gastos_diarios/ que tiene su propio scope.
+          if (r.scope && r.scope.endsWith('/') && !r.scope.includes('/gastos_diarios/')) {
+            // Permitir mantener el SW del root si es el actual; aqui lo dejamos.
+          }
+        }
+        // Limpiar caches viejas del root (no tocar las del scope gastos_diarios)
+        if (typeof caches !== 'undefined') {
+          const keys = await caches.keys();
+          for (const k of keys) {
+            if (k.startsWith('dogroup-') && k !== 'dogroup-v3') {
+              await caches.delete(k);
+            }
+          }
+        }
+      }
+    } catch(e) {}
+    location.replace('index.php');
+  })();
+  </script>
+</head>
+<body>
+  <noscript><meta http-equiv="refresh" content="0; url=index.php"></noscript>
+  <p>Redirigiendo... Si no ocurre, <a href="index.php">haz clic aqui</a>.</p>
+</body>
+</html>
