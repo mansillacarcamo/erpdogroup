@@ -61,8 +61,8 @@ if ($accion === 'aprobar') {
         header('Location: '.$volver); exit;
     }
     $soloObservacion = true;
-    $tituloNotif = 'Observacion de tu Jefe';
-    $mensajeNotif = 'Tu Jefe dejo una observacion en el gasto del '.$fechaTxt.' por '.$montoTxt.': '.$obs;
+    $tituloNotif = 'Observacion de tu Gerente de Finanzas';
+    $mensajeNotif = 'Tu Gerente de Finanzas dejo una observacion en el gasto del '.$fechaTxt.' por '.$montoTxt.': '.$obs;
     $tipoNotif = 'info';
 } else {
     flash('error','Accion invalida.');

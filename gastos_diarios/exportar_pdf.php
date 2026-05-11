@@ -28,7 +28,7 @@ $cierreDoc = $cc->fetch();
 
 $estadoColor = [
   'borrador' => ['#e5e7eb', '#475569', 'Borrador'],
-  'enviado_jefe' => ['#dbeafe', '#1d4ed8', 'Enviado al Jefe'],
+  'enviado_jefe' => ['#dbeafe', '#1d4ed8', 'Enviado al Gerente de Finanzas'],
   'enviado_validador' => ['#e0e7ff', '#4338ca', 'Enviado al Validador'],
   'aprobado' => ['#dcfce7', '#166534', 'Aprobado'],
   'validado' => ['#dcfce7', '#166534', 'Validado'],
@@ -117,14 +117,14 @@ if ($fotoPathPdf && is_file($fotoPathPdf)) {
   </div>
   <?php if ($cierreDoc['enviado_jefe_en']): ?>
     <span style="font-size:11px; color:#475569; margin-left:10px;">
-      - Enviado al Jefe: <strong><?= htmlspecialchars(date('d/m/Y H:i', strtotime($cierreDoc['enviado_jefe_en']))) ?></strong>
+      - Enviado al Gerente de Finanzas: <strong><?= htmlspecialchars(date('d/m/Y H:i', strtotime($cierreDoc['enviado_jefe_en']))) ?></strong>
     </span>
   <?php endif; ?>
   <?php if (!empty($cierreDoc['observaciones_usuario'])): ?>
     <div style="margin-top:6px; font-size:11px;"><strong>Observaciones del tecnico:</strong> <?= nl2br(htmlspecialchars($cierreDoc['observaciones_usuario'])) ?></div>
   <?php endif; ?>
   <?php if (!empty($cierreDoc['observaciones_jefe'])): ?>
-    <div style="margin-top:4px; font-size:11px;"><strong>Comentario del Jefe:</strong> <?= nl2br(htmlspecialchars($cierreDoc['observaciones_jefe'])) ?></div>
+    <div style="margin-top:4px; font-size:11px;"><strong>Comentario del Gerente de Finanzas:</strong> <?= nl2br(htmlspecialchars($cierreDoc['observaciones_jefe'])) ?></div>
   <?php endif; ?>
   <?php if (!empty($cierreDoc['observaciones_validador'])): ?>
     <div style="margin-top:4px; font-size:11px;"><strong>Comentario del Validador:</strong> <?= nl2br(htmlspecialchars($cierreDoc['observaciones_validador'])) ?></div>
@@ -165,7 +165,7 @@ if ($fotoPathPdf && is_file($fotoPathPdf)) {
 
 <div class="firma">
   <div>Tecnico<br><strong><?= htmlspecialchars($u['nombre']) ?></strong><br><span style="font-size:10px; color:#64748b;"><?= htmlspecialchars($u['ciudad'] ?: $u['region'] ?: '') ?></span></div>
-  <div>Jefe Zonal</div>
+  <div>Gerente de Finanzas</div>
   <div>Validador</div>
 </div>
 

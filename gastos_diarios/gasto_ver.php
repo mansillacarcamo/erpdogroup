@@ -83,13 +83,13 @@ include 'includes/nav.php';
         <?php
           // Resumen de estado de revision del jefe
           if ($g['estado'] === 'aprobado_jefe') {
-              $revAlert='success'; $revIco='bi-check-circle-fill'; $revTxt='Aprobado por el Jefe Zonal';
+              $revAlert='success'; $revIco='bi-check-circle-fill'; $revTxt='Aprobado por el Gerente de Finanzas';
           } elseif ($g['estado'] === 'rechazado_jefe') {
-              $revAlert='danger';  $revIco='bi-x-circle-fill';     $revTxt='Rechazado por el Jefe Zonal';
+              $revAlert='danger';  $revIco='bi-x-circle-fill';     $revTxt='Rechazado por el Gerente de Finanzas';
           } elseif (!empty($g['observacion_revision'])) {
-              $revAlert='warning'; $revIco='bi-chat-left-text-fill'; $revTxt='Con observacion del Jefe Zonal';
+              $revAlert='warning'; $revIco='bi-chat-left-text-fill'; $revTxt='Con observacion del Gerente de Finanzas';
           } else {
-              $revAlert='secondary'; $revIco='bi-hourglass-split'; $revTxt='Pendiente de revision del Jefe Zonal';
+              $revAlert='secondary'; $revIco='bi-hourglass-split'; $revTxt='Pendiente de revision del Gerente de Finanzas';
           }
         ?>
         <div class="alert alert-<?= $revAlert ?> d-flex align-items-start gap-2 mb-3 py-2 px-3">
@@ -156,7 +156,7 @@ include 'includes/nav.php';
         <?php if ($puedeRevisar): ?>
           <hr>
           <div class="alert alert-info small mb-3 py-2">
-            <i class="bi bi-info-circle"></i> Como Jefe Zonal puedes <b>aprobar</b>, <b>observar</b> o <b>rechazar</b> este gasto. El tecnico sera notificado.
+            <i class="bi bi-info-circle"></i> Como Gerente de Finanzas puedes <b>aprobar</b>, <b>observar</b> o <b>rechazar</b> este gasto. El tecnico sera notificado.
           </div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-success flex-grow-1" data-bs-toggle="modal" data-bs-target="#mRevGV" data-acc="aprobar">

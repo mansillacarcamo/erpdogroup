@@ -68,7 +68,7 @@ include 'includes/head.php'; include 'includes/nav.php';
 
     <form method="post">
       <input type="hidden" name="u" value="<?= $uid ?>"><input type="hidden" name="anio" value="<?= $anio ?>"><input type="hidden" name="mes" value="<?= $mes ?>">
-      <div class="mb-3"><label class="form-label">Destinatario <?php if ($emailJefeSugerido): ?><span class="text-muted small">(tu Jefe Zonal: <?= h($nombreJefe) ?>)</span><?php endif; ?></label>
+      <div class="mb-3"><label class="form-label">Destinatario <?php if ($emailJefeSugerido): ?><span class="text-muted small">(tu Gerente de Finanzas: <?= h($nombreJefe) ?>)</span><?php endif; ?></label>
         <input type="email" name="destino" class="form-control" required placeholder="jefe@empresa.cl" value="<?= h($emailJefeSugerido) ?>"></div>
       <div class="mb-3"><label class="form-label">Asunto</label>
         <input type="text" name="asunto" class="form-control" value="Rendición de gastos · <?= h($u['nombre']) ?> · <?= nombreMes($mes) ?> <?= $anio ?>"></div>

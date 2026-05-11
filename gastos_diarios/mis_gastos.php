@@ -83,10 +83,10 @@ include 'includes/nav.php';
   <i class="bi bi-send-check"></i>
   <span>Cierre del periodo: <strong class="estado <?= h($cierrePeriodo['estado']) ?>"><?= h($cierrePeriodo['estado']) ?></strong></span>
   <?php if (!empty($cierrePeriodo['enviado_jefe_en'])): ?>
-    <span class="small text-muted">- Enviado al Jefe: <?= h($cierrePeriodo['enviado_jefe_en']) ?></span>
+    <span class="small text-muted">- Enviado al Gerente de Finanzas: <?= h($cierrePeriodo['enviado_jefe_en']) ?></span>
   <?php endif; ?>
   <?php if (!empty($cierrePeriodo['observaciones_jefe'])): ?>
-    <div class="w-100 small mt-1"><strong>Jefe:</strong> <?= nl2br(h($cierrePeriodo['observaciones_jefe'])) ?></div>
+    <div class="w-100 small mt-1"><strong>Gerente de Finanzas:</strong> <?= nl2br(h($cierrePeriodo['observaciones_jefe'])) ?></div>
   <?php endif; ?>
 </div>
 <?php endif; ?>
@@ -95,15 +95,6 @@ include 'includes/nav.php';
   <a href="exportar_pdf.php?anio=<?= $anio ?>&mes=<?= $mes ?>" target="_blank" class="btn btn-outline-danger btn-sm">
     <i class="bi bi-file-earmark-pdf me-1"></i>Generar PDF
   </a>
-  <?php if (!$cierrePeriodo || in_array($cierrePeriodo['estado'], ['borrador','rechazado'])): ?>
-    <a href="cierre_mes.php?anio=<?= $anio ?>&mes=<?= $mes ?>" class="btn btn-success btn-sm">
-      <i class="bi bi-send-check me-1"></i>Enviar al Jefe para validación
-    </a>
-  <?php else: ?>
-    <span class="btn btn-success btn-sm disabled" aria-disabled="true">
-      <i class="bi bi-check2-circle me-1"></i>Enviado al Jefe
-    </span>
-  <?php endif; ?>
 </div>
 
 <div class="row g-2 mb-3">
@@ -114,9 +105,9 @@ include 'includes/nav.php';
 
 <?php if ($gastos): ?>
 <div class="d-flex flex-wrap gap-2 mb-3 small">
-  <span class="rev-chip rev-aprob" title="Aprobados por el Jefe"><i class="bi bi-check-circle-fill"></i> <?= $nAprob ?> aprobado<?= $nAprob===1?'':'s' ?></span>
-  <span class="rev-chip rev-obs"   title="Con observacion del Jefe"><i class="bi bi-chat-left-text-fill"></i> <?= $nObs ?> observado<?= $nObs===1?'':'s' ?></span>
-  <span class="rev-chip rev-rech"  title="Rechazados por el Jefe"><i class="bi bi-x-circle-fill"></i> <?= $nRech ?> rechazado<?= $nRech===1?'':'s' ?></span>
+  <span class="rev-chip rev-aprob" title="Aprobados por el Gerente de Finanzas"><i class="bi bi-check-circle-fill"></i> <?= $nAprob ?> aprobado<?= $nAprob===1?'':'s' ?></span>
+  <span class="rev-chip rev-obs"   title="Con observacion del Gerente de Finanzas"><i class="bi bi-chat-left-text-fill"></i> <?= $nObs ?> observado<?= $nObs===1?'':'s' ?></span>
+  <span class="rev-chip rev-rech"  title="Rechazados por el Gerente de Finanzas"><i class="bi bi-x-circle-fill"></i> <?= $nRech ?> rechazado<?= $nRech===1?'':'s' ?></span>
   <span class="rev-chip rev-pend"  title="Pendientes de revision"><i class="bi bi-hourglass-split"></i> <?= $nPend ?> pendiente<?= $nPend===1?'':'s' ?></span>
 </div>
 <?php endif; ?>
@@ -131,11 +122,11 @@ include 'includes/nav.php';
     <?php else: foreach ($gastos as $g):
       // Estado de revision del gasto
       if ($g['estado'] === 'aprobado_jefe') {
-          $revCls='aprob'; $revIco='bi-check-circle-fill'; $revTxt='Aprobado por el Jefe';
+          $revCls='aprob'; $revIco='bi-check-circle-fill'; $revTxt='Aprobado por el Gerente de Finanzas';
       } elseif ($g['estado'] === 'rechazado_jefe') {
-          $revCls='rech';  $revIco='bi-x-circle-fill';     $revTxt='Rechazado por el Jefe';
+          $revCls='rech';  $revIco='bi-x-circle-fill';     $revTxt='Rechazado por el Gerente de Finanzas';
       } elseif (!empty($g['observacion_revision'])) {
-          $revCls='obs';   $revIco='bi-chat-left-text-fill'; $revTxt='Con observacion del Jefe';
+          $revCls='obs';   $revIco='bi-chat-left-text-fill'; $revTxt='Con observacion del Gerente de Finanzas';
       } else {
           $revCls='pend';  $revIco='bi-hourglass-split';   $revTxt='Pendiente de revision';
       }
@@ -156,7 +147,7 @@ include 'includes/nav.php';
             <?php if (!empty($g['observacion_revision'])): ?>
               <div class="rev-obs-box mt-2">
                 <div class="small fw-semibold text-uppercase text-muted mb-1">
-                  <i class="bi bi-megaphone-fill"></i> Observacion del Jefe:
+                  <i class="bi bi-megaphone-fill"></i> Observacion del Gerente de Finanzas:
                 </div>
                 <div class="small"><?= nl2br(h($g['observacion_revision'])) ?></div>
               </div>

@@ -297,7 +297,7 @@ require_once 'includes/header.php';
           <div class="mb-2"><label class="form-label fw-semibold">Correo electrónico</label><input type="email" name="email" class="form-control" placeholder="usuario@empresa.cl"></div>
           <div class="mb-2"><label class="form-label fw-semibold">Contraseña *</label><input type="password" name="clave" class="form-control" required></div>
           <div class="mb-3"><label class="form-label fw-semibold">Rol</label>
-            <select name="rol" class="form-select"><option value="usuario">Usuario</option><option value="gerente_comercial">Gerente Comercial</option><option value="admin">Administrador</option></select>
+            <select name="rol" class="form-select"><option value="usuario">Usuario</option><option value="gerente_comercial">Gerente Comercial</option><option value="gerente_general">Gerente General</option><option value="admin">Administrador</option></select>
           </div>
           <button class="btn btn-danger w-100"><i class="bi bi-save me-1"></i>Crear</button>
         </form>
@@ -336,6 +336,7 @@ require_once 'includes/header.php';
                   <select name="nuevo_rol" class="form-select form-select-sm d-inline-block" style="width:auto;" onchange="if(confirm('¿Cambiar rol a '+this.options[this.selectedIndex].text+'?'))this.form.submit();else this.value='<?= $u['rol'] ?>';">
                     <option value="usuario" <?= $u['rol']==='usuario'?'selected':'' ?>>Usuario</option>
                     <option value="gerente_comercial" <?= $u['rol']==='gerente_comercial'?'selected':'' ?>>Gerente Comercial</option>
+                    <option value="gerente_general" <?= $u['rol']==='gerente_general'?'selected':'' ?>>Gerente General</option>
                     <option value="admin" <?= $u['rol']==='admin'?'selected':'' ?>>Administrador</option>
                   </select>
                 </form>

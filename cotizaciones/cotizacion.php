@@ -318,7 +318,7 @@ require_once '../includes/header.php';
 <script>
   iniciarSelectorCliente('selectorClienteCot', {
     nombre: 'cot_nombre', rut: 'cot_rut', telefono: 'cot_telefono', email: 'cot_email'
-  });
+  }, '../api_clientes.php');
 
   (function () {
     var sel = document.getElementById('cot_obra_select');

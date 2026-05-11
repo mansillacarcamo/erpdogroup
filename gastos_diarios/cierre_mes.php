@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'envia
         }
     } catch (Exception $e) { /* silencioso, no bloquear */ }
 
-    flash('exito','Cierre enviado a tu Jefe Zonal. Ya puedes descargar el PDF de respaldo.');
+    flash('exito','Cierre enviado a tu Gerente de Finanzas. Ya puedes descargar el PDF de respaldo.');
     header('Location: cierre_mes.php?anio='.$anio.'&mes='.$mes); exit;
 }
 
@@ -102,7 +102,7 @@ include 'includes/nav.php';
   </a>
   <?php if ($cierre && in_array($cierre['estado'], ['enviado_jefe','enviado_validador','aprobado','validado'])): ?>
     <a href="enviar_correo.php?anio=<?= $anio ?>&mes=<?= $mes ?>" class="btn btn-outline-primary">
-      <i class="bi bi-envelope me-1"></i>Enviar PDF por correo al Jefe
+      <i class="bi bi-envelope me-1"></i>Enviar PDF por correo al Gerente de Finanzas
     </a>
   <?php endif; ?>
 </div>
@@ -111,9 +111,9 @@ include 'includes/nav.php';
   <div class="alert alert-<?= in_array($cierre['estado'], ['aprobado','validado']) ? 'success' : (in_array($cierre['estado'], ['enviado_jefe','enviado_validador']) ? 'info' : ($cierre['estado']==='rechazado' ? 'warning' : 'secondary')) ?>">
     <i class="bi bi-info-circle me-1"></i>
     Estado actual del cierre: <span class="estado <?= htmlspecialchars($cierre['estado']) ?>"><?= htmlspecialchars($cierre['estado']) ?></span>
-    <?php if ($cierre['enviado_jefe_en']): ?> · Enviado al Jefe: <strong><?= htmlspecialchars(date('d/m/Y H:i', strtotime($cierre['enviado_jefe_en']))) ?></strong><?php endif; ?>
+    <?php if ($cierre['enviado_jefe_en']): ?> · Enviado al Gerente de Finanzas: <strong><?= htmlspecialchars(date('d/m/Y H:i', strtotime($cierre['enviado_jefe_en']))) ?></strong><?php endif; ?>
     <?php if ($cierre['observaciones_jefe']): ?>
-      <div class="mt-2"><strong>Comentario del Jefe:</strong> <?= nl2br(htmlspecialchars($cierre['observaciones_jefe'])) ?></div>
+      <div class="mt-2"><strong>Comentario del Gerente de Finanzas:</strong> <?= nl2br(htmlspecialchars($cierre['observaciones_jefe'])) ?></div>
     <?php endif; ?>
     <?php if ($cierre['observaciones_validador']): ?>
       <div class="mt-2"><strong>Comentario del Validador:</strong> <?= nl2br(htmlspecialchars($cierre['observaciones_validador'])) ?></div>
@@ -156,15 +156,15 @@ include 'includes/nav.php';
 
 <?php if (!$cierre || in_array($cierre['estado'], ['borrador','rechazado'])): ?>
 <div class="card">
-  <div class="card-header"><i class="bi bi-send me-1"></i>Enviar a Jefe Zonal</div>
+  <div class="card-header"><i class="bi bi-send me-1"></i>Enviar a Gerente de Finanzas</div>
   <div class="card-body">
     <form method="post">
       <input type="hidden" name="accion" value="enviar">
       <div class="mb-3">
         <label class="form-label">Observaciones / comentarios (opcional)</label>
-        <textarea name="observaciones" class="form-control" rows="3" placeholder="Detalle relevante para tu jefe zonal"><?= htmlspecialchars($cierre['observaciones_usuario'] ?? '') ?></textarea>
+        <textarea name="observaciones" class="form-control" rows="3" placeholder="Detalle relevante para tu Gerente de Finanzas"><?= htmlspecialchars($cierre['observaciones_usuario'] ?? '') ?></textarea>
       </div>
-      <button class="btn btn-success btn-lg w-100" data-confirm="¿Confirmas enviar este cierre a tu jefe zonal?">
+      <button class="btn btn-success btn-lg w-100" data-confirm="¿Confirmas enviar este cierre a tu Gerente de Finanzas?">
         <i class="bi bi-send-check me-1"></i> Enviar cierre
       </button>
     </form>

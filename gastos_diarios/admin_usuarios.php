@@ -95,37 +95,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$datos) {
                     flash('error','El usuario no existe (ya fue eliminado).');
                 } else {
-                    // Bloquear eliminacion si tiene historial economico
+                    // Conteo previo para informar al admin que se elimina (cascade completo)
                     $cg = $pdo->prepare("SELECT COUNT(*) FROM gastos WHERE usuario_id=?");
                     $cg->execute([$id]);
                     $nGastos = (int)$cg->fetchColumn();
                     $cc = $pdo->prepare("SELECT COUNT(*) FROM cierres_mensuales WHERE usuario_id=?");
                     $cc->execute([$id]);
                     $nCierres = (int)$cc->fetchColumn();
-                    if ($nGastos > 0 || $nCierres > 0) {
-                        flash('error','No se puede eliminar "'.$datos['usuario'].'": tiene '.$nGastos.' gasto(s) y '.$nCierres.' cierre(s) en historial. Desactivalo desde Editar para preservar la trazabilidad.');
-                    } else {
-                        // Romper referencias jefe/validador hacia este usuario
-                        $pdo->prepare("UPDATE usuarios SET jefe_zonal_id=NULL WHERE jefe_zonal_id=?")->execute([$id]);
-                        $pdo->prepare("UPDATE usuarios SET validador_id=NULL WHERE validador_id=?")->execute([$id]);
-                        $pdo->beginTransaction();
+
+                    // Romper referencias jefe/validador hacia este usuario
+                    $pdo->prepare("UPDATE usuarios SET jefe_zonal_id=NULL WHERE jefe_zonal_id=?")->execute([$id]);
+                    $pdo->prepare("UPDATE usuarios SET validador_id=NULL WHERE validador_id=?")->execute([$id]);
+                    $pdo->beginTransaction();
+                    try {
+                        // archivos_gasto se borra solo (FK ON DELETE CASCADE sobre gastos)
+                        $pdo->prepare("DELETE FROM gastos WHERE usuario_id=?")->execute([$id]);
+                        $pdo->prepare("DELETE FROM cierres_mensuales WHERE usuario_id=?")->execute([$id]);
+                        $pdo->prepare("DELETE FROM asignaciones WHERE usuario_id=?")->execute([$id]);
+                        $pdo->prepare("DELETE FROM notificaciones WHERE usuario_id=?")->execute([$id]);
+                        $pdo->prepare("DELETE FROM usuarios WHERE id=?")->execute([$id]);
+                        $pdo->commit();
+                        // Borrar foto de perfil del disco si existe
                         try {
-                            $pdo->prepare("DELETE FROM asignaciones WHERE usuario_id=?")->execute([$id]);
-                            $pdo->prepare("DELETE FROM notificaciones WHERE usuario_id=?")->execute([$id]);
-                            $pdo->prepare("DELETE FROM usuarios WHERE id=?")->execute([$id]);
-                            $pdo->commit();
-                            // Borrar foto de perfil del disco si existe
-                            try {
-                                $rutaFoto = __DIR__ . '/img/perfiles/u_' . $id;
-                                foreach (['.jpg','.jpeg','.png','.webp'] as $ext) {
-                                    if (is_file($rutaFoto.$ext)) @unlink($rutaFoto.$ext);
-                                }
-                            } catch (Exception $eF) {}
-                            flash('exito','Usuario "'.$datos['usuario'].'" eliminado correctamente.');
-                        } catch (Exception $eT) {
-                            $pdo->rollBack();
-                            flash('error','No se pudo eliminar: '.$eT->getMessage());
-                        }
+                            $rutaFoto = __DIR__ . '/img/perfiles/u_' . $id;
+                            foreach (['.jpg','.jpeg','.png','.webp'] as $ext) {
+                                if (is_file($rutaFoto.$ext)) @unlink($rutaFoto.$ext);
+                            }
+                            // Foto perfil nueva (uploads/usuarios)
+                            if (defined('FOTO_USUARIOS_DIR') && !empty($datos['foto_perfil'])) {
+                                $fp = FOTO_USUARIOS_DIR . DIRECTORY_SEPARATOR . $datos['foto_perfil'];
+                                if (is_file($fp)) @unlink($fp);
+                            }
+                            // Adjuntos de gastos del usuario (uploads/u{id})
+                            $dirAdj = __DIR__ . '/uploads/u' . $id;
+                            if (is_dir($dirAdj)) {
+                                foreach (glob($dirAdj.'/*') ?: [] as $fA) { @unlink($fA); }
+                                @rmdir($dirAdj);
+                            }
+                        } catch (Exception $eF) {}
+                        $detalle = $nGastos > 0 || $nCierres > 0
+                                 ? ' (incluyendo '.$nGastos.' gasto(s) y '.$nCierres.' cierre(s) del historial)'
+                                 : '';
+                        flash('exito','Usuario "'.$datos['usuario'].'" eliminado correctamente'.$detalle.'.');
+                    } catch (Exception $eT) {
+                        $pdo->rollBack();
+                        flash('error','No se pudo eliminar: '.$eT->getMessage());
                     }
                 }
             } catch (Exception $e) {
@@ -196,6 +210,16 @@ $asigs = [];
 $qa = $pdo->prepare("SELECT * FROM asignaciones WHERE anio=? AND mes=?");
 $qa->execute([$anioDef, $mesDef]);
 foreach ($qa->fetchAll() as $a) $asigs[$a['usuario_id']] = $a;
+
+// Conteo de historial por usuario (para mostrar impacto al eliminar)
+$histGastos = [];
+foreach ($pdo->query("SELECT usuario_id, COUNT(*) c FROM gastos GROUP BY usuario_id") as $r) {
+    $histGastos[(int)$r['usuario_id']] = (int)$r['c'];
+}
+$histCierres = [];
+foreach ($pdo->query("SELECT usuario_id, COUNT(*) c FROM cierres_mensuales GROUP BY usuario_id") as $r) {
+    $histCierres[(int)$r['usuario_id']] = (int)$r['c'];
+}
 
 $titulo = 'Usuarios';
 include 'includes/head.php';
@@ -462,9 +486,17 @@ include 'includes/nav.php';
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <div class="alert alert-warning small mb-3">
+            <?php $nG = $histGastos[$u['id']] ?? 0; $nC = $histCierres[$u['id']] ?? 0; ?>
+            <div class="alert alert-danger small mb-3">
               <strong>Esta accion no se puede deshacer.</strong>
-              Si el usuario tiene gastos o cierres registrados, el sistema te impedira eliminarlo y deberas <em>desactivarlo</em> desde Editar.
+              <?php if ($nG > 0 || $nC > 0): ?>
+                Se eliminaran tambien <strong><?= $nG ?> gasto<?= $nG===1?'':'s' ?></strong>,
+                <strong><?= $nC ?> cierre<?= $nC===1?'':'s' ?> mensual<?= $nC===1?'':'es' ?></strong>,
+                las asignaciones, notificaciones y todos los archivos adjuntos del usuario.
+                Si prefieres preservar la trazabilidad, <em>desactiva</em> al usuario desde Editar.
+              <?php else: ?>
+                Tambien se eliminan asignaciones, notificaciones y archivos del usuario.
+              <?php endif; ?>
             </div>
             <p class="mb-1">Vas a eliminar permanentemente a:</p>
             <p class="mb-3">

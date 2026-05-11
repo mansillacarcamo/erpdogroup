@@ -92,7 +92,7 @@ include 'includes/head.php'; include 'includes/nav.php';
           <div class="col-4"><div class="kpi"><div class="lbl">Gastado</div><div class="val small text-danger"><?= fmtCLP($c['total_gastado']) ?></div></div></div>
           <div class="col-4"><div class="kpi"><div class="lbl">Saldo</div><div class="val small text-<?= $c['saldo_final']<0?'danger':'success' ?>"><?= fmtCLP($c['saldo_final']) ?></div></div></div>
         </div>
-        <?php if ($c['observaciones_jefe']): ?><div class="alert alert-light small mb-2"><strong>Jefe:</strong> <?= nl2br(htmlspecialchars($c['observaciones_jefe'])) ?></div><?php endif; ?>
+        <?php if ($c['observaciones_jefe']): ?><div class="alert alert-light small mb-2"><strong>Gerente de Finanzas:</strong> <?= nl2br(htmlspecialchars($c['observaciones_jefe'])) ?></div><?php endif; ?>
         <?php if ($c['observaciones_usuario']): ?><div class="alert alert-light small mb-2"><strong>Usuario:</strong> <?= nl2br(htmlspecialchars($c['observaciones_usuario'])) ?></div><?php endif; ?>
 
         <div class="d-flex gap-2 flex-wrap">

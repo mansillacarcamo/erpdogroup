@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $c) {
         // Notificar al tecnico
         try {
             $pdo->prepare("INSERT INTO notificaciones (usuario_id,titulo,mensaje,tipo,enlace) VALUES (?,?,?,?,?)")
-                ->execute([$uid, 'Rendicion aprobada por el Jefe',
+                ->execute([$uid, 'Rendicion aprobada por el Gerente de Finanzas',
                            'Tu rendicion de '.nombreMes($mes).' '.$anio.' fue aprobada y enviada al Validador.'.($obs?' Comentario: '.$obs:''),
                            'success', 'cierre_mes.php?anio='.$anio.'&mes='.$mes]);
             // Notificar al validador asignado (si existe)
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $c) {
         // Notificar al tecnico
         try {
             $pdo->prepare("INSERT INTO notificaciones (usuario_id,titulo,mensaje,tipo,enlace) VALUES (?,?,?,?,?)")
-                ->execute([$uid, 'Rendicion rechazada por el Jefe',
+                ->execute([$uid, 'Rendicion rechazada por el Gerente de Finanzas',
                            'Tu rendicion de '.nombreMes($mes).' '.$anio.' fue devuelta.'.($obs?' Motivo: '.$obs:' Revisa y vuelve a enviar.'),
                            'warning', 'cierre_mes.php?anio='.$anio.'&mes='.$mes]);
         } catch (Exception $e) { /* silencioso */ }

@@ -111,6 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $err_app = 'gastos'; $err_msg = 'Usuario o contraseña incorrectos';
         break;
+
+      case 'gerente_general':
+        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE usuario = ?");
+        $stmt->execute([$user]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row && password_verify($pass, $row['clave'])) {
+          if (!in_array($row['rol'], ['gerente_general','admin'], true)) {
+            $err_app = 'gerente_general';
+            $err_msg = 'Este usuario no tiene permisos de Gerente General.';
+            break;
+          }
+          $_SESSION['gerente_general'] = [
+            'id'=>$row['id'], 'usuario'=>$row['usuario'], 'nombre'=>$row['nombre'],
+            'rol'=>$row['rol'], 'cargo'=>$row['cargo'] ?? ''
+          ];
+          header('Location: gerente_general/dashboard.php'); exit;
+        }
+        $err_app = 'gerente_general'; $err_msg = 'Usuario o contraseña incorrectos';
+        break;
     }
   } catch (Exception $ex) {
     $err_app = $app; $err_msg = 'Error en el sistema. Contacta al administrador.';
@@ -190,8 +209,11 @@ body::after{
   margin-bottom: 14px; font-weight:600;
 }
 .apps-grid{
-  display:grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-  width: 100%; max-width: 520px;
+  display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  width: 100%; max-width: 540px;
+}
+@media (min-width: 720px){
+  .apps-grid{ grid-template-columns: repeat(6, 1fr); max-width: 760px; gap: 8px; }
 }
 .app-tile{
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -309,6 +331,10 @@ body::after{
       style="background:linear-gradient(135deg,#0a0a0a,#0d9488);box-shadow:0 3px 10px rgba(13,148,136,.3);">
       <i class="bi bi-wallet2"></i><span>Gastos</span>
     </button>
+    <button type="button" class="app-tile" data-bs-toggle="modal" data-bs-target="#mLoginGerente"
+      style="background:linear-gradient(135deg,#6f42c1,#4c2a85);box-shadow:0 3px 10px rgba(111,66,193,.35);">
+      <i class="bi bi-graph-up-arrow"></i><span>Gerente General</span>
+    </button>
   </div>
 </div>
 
@@ -316,14 +342,15 @@ body::after{
   Desarrollado por <strong>Departamento de Informática DOGroup</strong>
 </div>
 
-<!-- ═══════════ 5 MODALES DE LOGIN (uno por app) ═══════════ -->
+<!-- ═══════════ 6 MODALES DE LOGIN (uno por app) ═══════════ -->
 <?php
 $apps = [
-  ['id'=>'mLoginGestion',     'app'=>'gestion',     'titulo'=>'GESTIÓN DO',   'sub'=>'Acceso al sistema',     'icon'=>'bi-buildings-fill',   'accent'=>'#dc3545', 'accent_dark'=>'#7c1322'],
-  ['id'=>'mLoginConductor',   'app'=>'conductor',   'titulo'=>'CONDUCTORES',  'sub'=>'Portal de despacho',    'icon'=>'bi-truck-front-fill','accent'=>'#3b82f6', 'accent_dark'=>'#1d4ed8'],
-  ['id'=>'mLoginExterno',     'app'=>'externo',     'titulo'=>'CARCHEK',      'sub'=>'Validación externa',    'icon'=>'bi-shield-check',    'accent'=>'#10b981', 'accent_dark'=>'#047857'],
-  ['id'=>'mLoginCombustible', 'app'=>'combustible', 'titulo'=>'COMBUSTIBLE',  'sub'=>'Portal del responsable','icon'=>'bi-fuel-pump-fill',  'accent'=>'#d97706', 'accent_dark'=>'#92400e'],
-  ['id'=>'mLoginGastos',      'app'=>'gastos',      'titulo'=>'CONTROL GASTOS','sub'=>'Gastos diarios',       'icon'=>'bi-wallet2',         'accent'=>'#d4af37', 'accent_dark'=>'#a78329'],
+  ['id'=>'mLoginGestion',     'app'=>'gestion',         'titulo'=>'GESTIÓN DO',     'sub'=>'Acceso al sistema',      'icon'=>'bi-buildings-fill',   'accent'=>'#dc3545', 'accent_dark'=>'#7c1322'],
+  ['id'=>'mLoginConductor',   'app'=>'conductor',       'titulo'=>'CONDUCTORES',    'sub'=>'Portal de despacho',     'icon'=>'bi-truck-front-fill','accent'=>'#3b82f6', 'accent_dark'=>'#1d4ed8'],
+  ['id'=>'mLoginExterno',     'app'=>'externo',         'titulo'=>'CARCHEK',        'sub'=>'Validación externa',     'icon'=>'bi-shield-check',    'accent'=>'#10b981', 'accent_dark'=>'#047857'],
+  ['id'=>'mLoginCombustible', 'app'=>'combustible',     'titulo'=>'COMBUSTIBLE',    'sub'=>'Portal del responsable', 'icon'=>'bi-fuel-pump-fill',  'accent'=>'#d97706', 'accent_dark'=>'#92400e'],
+  ['id'=>'mLoginGastos',      'app'=>'gastos',          'titulo'=>'CONTROL GASTOS', 'sub'=>'Gastos diarios',         'icon'=>'bi-wallet2',         'accent'=>'#d4af37', 'accent_dark'=>'#a78329'],
+  ['id'=>'mLoginGerente',     'app'=>'gerente_general', 'titulo'=>'GERENTE GENERAL','sub'=>'Panel ejecutivo',        'icon'=>'bi-graph-up-arrow',  'accent'=>'#6f42c1', 'accent_dark'=>'#4c2a85'],
 ];
 foreach ($apps as $a):
 ?>
@@ -352,7 +379,7 @@ foreach ($apps as $a):
 <?php if ($err_app): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  var ids = {gestion:'mLoginGestion', conductor:'mLoginConductor', externo:'mLoginExterno', combustible:'mLoginCombustible', gastos:'mLoginGastos'};
+  var ids = {gestion:'mLoginGestion', conductor:'mLoginConductor', externo:'mLoginExterno', combustible:'mLoginCombustible', gastos:'mLoginGastos', gerente_general:'mLoginGerente'};
   var id = ids[<?= json_encode($err_app) ?>];
   if (id) new bootstrap.Modal(document.getElementById(id)).show();
 });

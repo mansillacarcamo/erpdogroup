@@ -33,7 +33,6 @@ if ($rol === 'usuario') {
     $links[] = ['dashboard.php',   'Inicio',           'bi-house-door-fill'];
     $links[] = ['gasto_nuevo.php', 'Registrar gasto',  'bi-plus-circle-fill'];
     $links[] = ['mis_gastos.php',  'Mis gastos',       'bi-list-ul'];
-    $links[] = ['cierre_mes.php',  'Cierre mensual',   'bi-send-check-fill'];
 } elseif ($rol === 'jefe') {
     $links[] = ['jefe_dashboard.php', 'Mi equipo',          'bi-people-fill'];
     $links[] = ['jefe_cierres.php',   'Cierres del equipo', 'bi-clipboard-check-fill'];

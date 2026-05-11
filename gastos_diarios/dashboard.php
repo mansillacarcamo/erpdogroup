@@ -128,7 +128,6 @@ include 'includes/nav.php';
       <div class="card-body d-grid gap-2">
         <a href="gasto_nuevo.php" class="btn btn-primary"><i class="bi bi-camera me-1"></i> Registrar gasto con foto</a>
         <a href="mis_gastos.php" class="btn btn-outline-primary"><i class="bi bi-list-ul me-1"></i> Mis gastos del mes</a>
-        <a href="cierre_mes.php" class="btn btn-outline-success"><i class="bi bi-send-check me-1"></i> Enviar cierre mensual</a>
       </div>
     </div>
 
