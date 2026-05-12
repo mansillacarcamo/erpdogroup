@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - /bin/rsync -av --delete --exclude=.git/ --exclude=.gitignore --exclude=.cpanel.yml --exclude=ocdogroup.db --exclude=ocdogroup.db-journal --exclude=ocdogroup.db-wal --exclude=ocdogroup.db-shm --exclude=uploads/ --exclude=backups/ --exclude=smtp_config.php --exclude=*.zip --exclude=*.ps1 --exclude=response.html --exclude=resp.html --exclude=_test_*.php --exclude=_migrar_*.php ./ /home/dogroupc/public_html/gestion.dogroup.cl/
+    - /bin/bash /home/dogroupc/repositories/erpdogroup/tools/deploy.sh
