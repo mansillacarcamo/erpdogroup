@@ -13,7 +13,7 @@
 
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/$USER/public_html/
+    - export DEPLOYPATH=/home/dogroupc/public_html/gestion.dogroup.cl/
     - /bin/rsync -av --delete
         --exclude='.git/'
         --exclude='.gitignore'
