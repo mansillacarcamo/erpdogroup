@@ -503,18 +503,47 @@ require_once 'includes/header.php';
       <div class="card-body p-2" style="max-height:300px;overflow-y:auto;">
         <?php foreach ($todosArchivos as $archDoc):
           $iconDoc = getIconoArchivo($archDoc['nombre_original'], $iconosArchivo);
+          $mimeDoc = $archDoc['tipo_mime'] ?? '';
+          $extDoc = strtolower(pathinfo($archDoc['nombre_original'], PATHINFO_EXTENSION));
+          $esImagenDoc = in_array($mimeDoc, ['image/jpeg','image/png','image/gif','image/webp']) || in_array($extDoc, ['jpg','jpeg','png','gif','webp']);
+          $esPdfDoc = $mimeDoc === 'application/pdf' || $extDoc === 'pdf';
+          $puedePrevisualizar = $esImagenDoc || $esPdfDoc;
+          $urlVer = 'descargar_archivo.php?id=' . $archDoc['id'] . '&accion=ver';
         ?>
         <div class="d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1" style="font-size:12px;">
           <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
-            <i class="bi <?= $iconDoc[0] ?> <?= $iconDoc[1] ?> me-1 flex-shrink-0" style="font-size:16px;"></i>
+            <?php if ($esImagenDoc): ?>
+              <a href="#" class="me-2 flex-shrink-0 preview-trigger" data-preview-url="<?= htmlspecialchars($urlVer) ?>" data-preview-tipo="imagen" data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>" title="Vista previa">
+                <img src="<?= htmlspecialchars($urlVer) ?>" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #dee2e6;">
+              </a>
+            <?php else: ?>
+              <i class="bi <?= $iconDoc[0] ?> <?= $iconDoc[1] ?> me-1 flex-shrink-0" style="font-size:16px;"></i>
+            <?php endif; ?>
             <div class="overflow-hidden">
-              <a href="descargar_archivo.php?id=<?= $archDoc['id'] ?>&accion=ver" target="_blank" class="text-decoration-none text-truncate d-block" title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
+              <?php if ($puedePrevisualizar): ?>
+              <a href="#" class="text-decoration-none text-truncate d-block preview-trigger"
+                 data-preview-url="<?= htmlspecialchars($urlVer) ?>"
+                 data-preview-tipo="<?= $esImagenDoc ? 'imagen' : 'pdf' ?>"
+                 data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>"
+                 title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
                 <?= htmlspecialchars(mb_strimwidth($archDoc['nombre_original'], 0, 25, '...')) ?>
               </a>
+              <?php else: ?>
+              <a href="<?= htmlspecialchars($urlVer) ?>" target="_blank" class="text-decoration-none text-truncate d-block" title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
+                <?= htmlspecialchars(mb_strimwidth($archDoc['nombre_original'], 0, 25, '...')) ?>
+              </a>
+              <?php endif; ?>
               <small class="text-muted"><?= formatBytes($archDoc['tamano']) ?> — <?= date('d/m/Y', strtotime($archDoc['fecha'])) ?></small>
             </div>
           </div>
           <div class="d-flex gap-1 flex-shrink-0 ms-1">
+            <?php if ($puedePrevisualizar): ?>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 preview-trigger"
+                    data-preview-url="<?= htmlspecialchars($urlVer) ?>"
+                    data-preview-tipo="<?= $esImagenDoc ? 'imagen' : 'pdf' ?>"
+                    data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>"
+                    title="Vista previa"><i class="bi bi-eye"></i></button>
+            <?php endif; ?>
             <a href="descargar_archivo.php?id=<?= $archDoc['id'] ?>" class="btn btn-sm btn-outline-primary py-0 px-1" title="Descargar"><i class="bi bi-download"></i></a>
             <form method="POST" class="d-inline">
               <input type="hidden" name="action" value="eliminar_archivo">
@@ -649,14 +678,42 @@ require_once 'includes/header.php';
                 <div class="mt-1 mb-1">
                   <?php foreach ($archivosPorProceso[$p['id']] as $archP):
                     $iconArch = getIconoArchivo($archP['nombre_original'], $iconosArchivo);
-                    $esImagen = in_array($archP['tipo_mime'], ['image/jpeg','image/png','image/gif','image/webp']);
+                    $mimeP = $archP['tipo_mime'] ?? '';
+                    $extP = strtolower(pathinfo($archP['nombre_original'], PATHINFO_EXTENSION));
+                    $esImagen = in_array($mimeP, ['image/jpeg','image/png','image/gif','image/webp']) || in_array($extP, ['jpg','jpeg','png','gif','webp']);
+                    $esPdfP = $mimeP === 'application/pdf' || $extP === 'pdf';
+                    $puedePrevP = $esImagen || $esPdfP;
+                    $urlVerP = 'descargar_archivo.php?id=' . $archP['id'] . '&accion=ver';
                   ?>
                   <div class="d-inline-flex align-items-center border rounded px-2 py-1 me-1 mb-1 bg-light" style="font-size:11px;">
-                    <i class="bi <?= $iconArch[0] ?> <?= $iconArch[1] ?> me-1"></i>
-                    <a href="descargar_archivo.php?id=<?= $archP['id'] ?>&accion=ver" target="_blank" class="text-decoration-none me-1" title="<?= htmlspecialchars($archP['nombre_original']) ?>">
+                    <?php if ($esImagen): ?>
+                      <a href="#" class="me-1 preview-trigger" data-preview-url="<?= htmlspecialchars($urlVerP) ?>" data-preview-tipo="imagen" data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>" title="Vista previa">
+                        <img src="<?= htmlspecialchars($urlVerP) ?>" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:3px;border:1px solid #dee2e6;">
+                      </a>
+                    <?php else: ?>
+                      <i class="bi <?= $iconArch[0] ?> <?= $iconArch[1] ?> me-1"></i>
+                    <?php endif; ?>
+                    <?php if ($puedePrevP): ?>
+                    <a href="#" class="text-decoration-none me-1 preview-trigger"
+                       data-preview-url="<?= htmlspecialchars($urlVerP) ?>"
+                       data-preview-tipo="<?= $esImagen ? 'imagen' : 'pdf' ?>"
+                       data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>"
+                       title="<?= htmlspecialchars($archP['nombre_original']) ?>">
                       <?= htmlspecialchars(mb_strimwidth($archP['nombre_original'], 0, 30, '...')) ?>
                     </a>
+                    <?php else: ?>
+                    <a href="<?= htmlspecialchars($urlVerP) ?>" target="_blank" class="text-decoration-none me-1" title="<?= htmlspecialchars($archP['nombre_original']) ?>">
+                      <?= htmlspecialchars(mb_strimwidth($archP['nombre_original'], 0, 30, '...')) ?>
+                    </a>
+                    <?php endif; ?>
                     <small class="text-muted me-1">(<?= formatBytes($archP['tamano']) ?>)</small>
+                    <?php if ($puedePrevP): ?>
+                    <button type="button" class="btn btn-link btn-sm text-secondary p-0 me-1 preview-trigger"
+                            data-preview-url="<?= htmlspecialchars($urlVerP) ?>"
+                            data-preview-tipo="<?= $esImagen ? 'imagen' : 'pdf' ?>"
+                            data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>"
+                            style="font-size:11px;" title="Vista previa"><i class="bi bi-eye"></i></button>
+                    <?php endif; ?>
                     <a href="descargar_archivo.php?id=<?= $archP['id'] ?>" class="text-primary me-1" title="Descargar"><i class="bi bi-download"></i></a>
                     <form method="POST" class="d-inline">
                       <input type="hidden" name="action" value="eliminar_archivo">
@@ -724,5 +781,86 @@ require_once 'includes/header.php';
     </div>
   </div>
 </div>
+
+<!-- Modal Vista Previa Archivos -->
+<div class="modal fade" id="modalPreviewArchivo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title text-truncate" id="modalPreviewArchivoLabel"><i class="bi bi-eye me-2"></i><span id="previewNombre">Vista previa</span></h6>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <a id="previewDescargarBtn" href="#" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-download me-1"></i>Descargar</a>
+          <a id="previewAbrirBtn" href="#" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir en pestaña</a>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0 bg-light" style="min-height:70vh;">
+        <div id="previewContenido" class="d-flex align-items-center justify-content-center" style="min-height:70vh;">
+          <div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>Cargando vista previa…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modalEl = document.getElementById('modalPreviewArchivo');
+  if (!modalEl) return;
+  var bsModal = null;
+  function getModal(){
+    if (!bsModal && typeof bootstrap !== 'undefined') bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    return bsModal;
+  }
+  var contenedor = document.getElementById('previewContenido');
+  var nombreEl   = document.getElementById('previewNombre');
+  var descBtn    = document.getElementById('previewDescargarBtn');
+  var abrirBtn   = document.getElementById('previewAbrirBtn');
+
+  function abrirPreview(url, tipo, nombre){
+    if (!url) return;
+    nombreEl.textContent = nombre || 'Vista previa';
+    abrirBtn.href = url;
+    descBtn.href = url.replace(/(\?|&)accion=ver/, '$1accion=descargar');
+    contenedor.innerHTML = '';
+    if (tipo === 'imagen') {
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = nombre || '';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '85vh';
+      img.style.objectFit = 'contain';
+      img.style.display  = 'block';
+      img.style.margin   = '0 auto';
+      contenedor.appendChild(img);
+    } else if (tipo === 'pdf') {
+      var ifr = document.createElement('iframe');
+      ifr.src = url;
+      ifr.style.width = '100%';
+      ifr.style.height = '85vh';
+      ifr.style.border = '0';
+      contenedor.appendChild(ifr);
+    } else {
+      contenedor.innerHTML = '<div class="text-muted p-4">No hay vista previa disponible. <a href="'+url+'" target="_blank">Abrir archivo</a></div>';
+    }
+    var m = getModal();
+    if (m) m.show();
+  }
+
+  document.addEventListener('click', function(ev){
+    var trigger = ev.target.closest('.preview-trigger');
+    if (!trigger) return;
+    ev.preventDefault();
+    abrirPreview(
+      trigger.getAttribute('data-preview-url'),
+      trigger.getAttribute('data-preview-tipo'),
+      trigger.getAttribute('data-preview-nombre')
+    );
+  });
+
+  modalEl.addEventListener('hidden.bs.modal', function(){
+    contenedor.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>Cargando vista previa…</div>';
+  });
+})();
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

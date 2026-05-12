@@ -59,7 +59,7 @@ try {
         SELECT COUNT(*) FROM oc_aprobaciones WHERE estado='pendiente'
     ")->fetchColumn();
     $ocPendientes = $pdo->query("
-        SELECT a.id, a.oc_id, a.usuario_id, a.fecha_envio,
+        SELECT a.id, a.oc_id, a.usuario_id, a.creado_en AS fecha_envio,
                o.numero, o.fecha, o.proveedor_nombre, o.obra,
                o.total, o.moneda, o.preparada_por,
                u.nombre AS aprobador_nombre
@@ -67,7 +67,7 @@ try {
         JOIN ordenes_compra o ON o.id = a.oc_id
         LEFT JOIN usuarios u ON u.id = a.usuario_id
         WHERE a.estado='pendiente'
-        ORDER BY a.fecha_envio DESC, a.id DESC
+        ORDER BY a.creado_en DESC, a.id DESC
         LIMIT 8
     ")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) { /* tabla podría no existir */ }
@@ -315,6 +315,23 @@ $fraseHoy = $frasesMotivadoras[array_rand($frasesMotivadoras)];
       </div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+      <?php
+        $ggMisPend = 0;
+        try {
+            $st = $pdo->prepare("SELECT COUNT(*) FROM cot_aprobaciones WHERE usuario_id = ? AND estado = 'pendiente'");
+            $st->execute([(int)$gg['id']]);
+            $ggMisPend += (int)$st->fetchColumn();
+            $st = $pdo->prepare("SELECT COUNT(*) FROM oc_aprobaciones WHERE usuario_id = ? AND estado = 'pendiente'");
+            $st->execute([(int)$gg['id']]);
+            $ggMisPend += (int)$st->fetchColumn();
+        } catch (Exception $e) {}
+      ?>
+      <a href="validaciones.php" class="btn btn-sm btn-light position-relative">
+        <i class="bi bi-shield-check me-1"></i>Mis validaciones
+        <?php if ($ggMisPend > 0): ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><?= $ggMisPend ?></span>
+        <?php endif; ?>
+      </a>
       <a href="../inicio.php" class="btn btn-sm btn-light"><i class="bi bi-grid me-1"></i>Volver al sistema</a>
       <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Salir</a>
     </div>
@@ -368,7 +385,7 @@ $fraseHoy = $frasesMotivadoras[array_rand($frasesMotivadoras)];
       <div class="card gg-card h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
           <span><i class="bi bi-file-earmark-check-fill me-1"></i> Cotizaciones pendientes de validar</span>
-          <span class="badge badge-soft"><?= $cotPendientesTotal ?> total</span>
+          <a href="validaciones.php#tab-cot" class="badge badge-soft text-decoration-none"><?= $cotPendientesTotal ?> total <i class="bi bi-arrow-right ms-1"></i></a>
         </div>
         <div class="card-body pt-2">
           <?php if (empty($cotPendientes)): ?>
@@ -446,7 +463,7 @@ $fraseHoy = $frasesMotivadoras[array_rand($frasesMotivadoras)];
       <div class="card gg-card">
         <div class="card-header d-flex align-items-center justify-content-between">
           <span><i class="bi bi-file-earmark-ruled-fill me-1"></i> Órdenes de Compra por validar</span>
-          <span class="badge badge-soft"><?= $ocPendientesTotal ?> total</span>
+          <a href="validaciones.php#tab-oc" class="badge badge-soft text-decoration-none"><?= $ocPendientesTotal ?> total <i class="bi bi-arrow-right ms-1"></i></a>
         </div>
         <div class="card-body pt-2">
           <?php if (empty($ocPendientes)): ?>

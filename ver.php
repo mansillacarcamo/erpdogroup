@@ -121,6 +121,10 @@ try {
   </form>
   <?php endif; ?>
 
+  <?php if ($oc['estado'] === 'en_revision'): ?>
+  <a href="oc_nueva.php" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left me-1"></i>Volver atrás</a>
+  <?php endif; ?>
+
 </div>
 
 <?php if (!empty($_GET['aprobacion_enviada'])): ?>

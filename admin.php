@@ -77,6 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo->prepare("DELETE FROM oc_aprobadores WHERE usuario_id = ?")->execute([$uid]);
     $msg = ['success', 'Aprobador eliminado'];
   }
+  if ($action === 'actualizar_orden_aprobador') {
+    $uid   = (int)($_POST['uid'] ?? 0);
+    $orden = max(1, (int)($_POST['orden'] ?? 1));
+    if ($uid) {
+      $pdo->prepare("UPDATE oc_aprobadores SET orden = ? WHERE usuario_id = ?")->execute([$orden, $uid]);
+      $msg = ['success', 'Orden de validación actualizado'];
+    }
+  }
   if ($action === 'guardar_modulos') {
     $uid        = (int)($_POST['uid'] ?? 0);
     $modulosSel = $_POST['modulos'] ?? [];
@@ -129,10 +137,10 @@ $usuarios = array_filter($todosUsuarios, function($u) { return $u['rol'] !== 'ad
 $admins = array_filter($todosUsuarios, function($u) { return $u['rol'] === 'admin'; });
 
 $aprobadores = $pdo->query("
-    SELECT a.*, u.usuario, u.nombre, u.cargo
+    SELECT a.*, COALESCE(a.orden, 1) AS orden, u.usuario, u.nombre, u.cargo
     FROM oc_aprobadores a
     JOIN usuarios u ON a.usuario_id = u.id
-    ORDER BY a.id
+    ORDER BY COALESCE(a.orden, 1), a.id
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $aprobadorIds = array_column($aprobadores, 'usuario_id');
@@ -174,23 +182,37 @@ require_once 'includes/header.php';
   </div>
   <div class="card-body p-4">
     <p class="text-muted mb-3" style="font-size:13px;">
-      <i class="bi bi-info-circle me-1"></i>Estos usuarios deben validar cada Orden de Compra antes de que pueda ser enviada al proveedor. <strong>Todos</strong> los aprobadores listados deben aprobar para que la OC sea válida.
+      <i class="bi bi-info-circle me-1"></i>Estos usuarios deben validar cada Orden de Compra y Cotización antes de que sean aprobadas. <strong>Todos</strong> los aprobadores listados deben aprobar para que sean válidas.<br>
+      <i class="bi bi-arrow-down-up me-1"></i><strong>Orden de validación secuencial:</strong> menor número valida primero. Ej: Gerente de Finanzas <code>orden 1</code> → Gerente General <code>orden 2</code>. Aprobadores con el mismo orden validan en paralelo.
     </p>
 
     <div class="row g-3 mb-3">
       <?php foreach ($aprobadores as $ap): ?>
       <div class="col-md-4">
         <div class="card border-success">
-          <div class="card-body p-3 d-flex align-items-center justify-content-between">
-            <div>
-              <div class="fw-bold"><i class="bi bi-person-check text-success me-1"></i><?= htmlspecialchars($ap['nombre']) ?></div>
-              <small class="text-muted">@<?= htmlspecialchars($ap['usuario']) ?> — <?= htmlspecialchars($ap['cargo'] ?? 'Sin cargo') ?></small>
-              <br><small class="text-muted">Agregado por: <?= htmlspecialchars($ap['agregado_por']) ?></small>
+          <div class="card-body p-3">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+              <div class="flex-grow-1">
+                <div class="fw-bold"><i class="bi bi-person-check text-success me-1"></i><?= htmlspecialchars($ap['nombre']) ?></div>
+                <small class="text-muted">@<?= htmlspecialchars($ap['usuario']) ?> — <?= htmlspecialchars($ap['cargo'] ?? 'Sin cargo') ?></small>
+                <br><small class="text-muted">Agregado por: <?= htmlspecialchars($ap['agregado_por']) ?></small>
+              </div>
+              <form method="POST" class="ms-2" onsubmit="return confirm('¿Quitar a <?= htmlspecialchars($ap['nombre']) ?> como aprobador?')">
+                <input type="hidden" name="action" value="quitar_aprobador">
+                <input type="hidden" name="uid" value="<?= $ap['usuario_id'] ?>">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+              </form>
             </div>
-            <form method="POST" class="ms-2" onsubmit="return confirm('¿Quitar a <?= htmlspecialchars($ap['nombre']) ?> como aprobador?')">
-              <input type="hidden" name="action" value="quitar_aprobador">
+            <form method="POST" class="d-flex align-items-center gap-2 mt-2 pt-2 border-top">
+              <input type="hidden" name="action" value="actualizar_orden_aprobador">
               <input type="hidden" name="uid" value="<?= $ap['usuario_id'] ?>">
-              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+              <label class="small fw-semibold mb-0">Orden:</label>
+              <select name="orden" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                <?php for ($i = 1; $i <= 5; $i++): ?>
+                <option value="<?= $i ?>" <?= (int)$ap['orden'] === $i ? 'selected' : '' ?>><?= $i ?><?= $i===1?' (primero)':'' ?></option>
+                <?php endfor; ?>
+              </select>
+              <noscript><button class="btn btn-sm btn-primary">OK</button></noscript>
             </form>
           </div>
         </div>

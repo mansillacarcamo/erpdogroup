@@ -8,8 +8,18 @@ $stmt->execute([$id]);
 $cot = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$cot) { header('Location: historial_cotizaciones.php'); exit; }
 
-$bloqueado = in_array($cot['estado'], ['propuesta','negociacion'], true);
+$estadosPreAprobacion   = ['pendiente','en_revision','rechazada','corregir'];
+$estadosPreAdjudicacion = ['propuesta','negociacion'];
+$estadosSoloLectura     = ['adjudicada','desierta','cerrado'];
+$bloqueadoPreAprob   = in_array($cot['estado'], $estadosPreAprobacion, true);
+$bloqueadoPreAdj     = in_array($cot['estado'], $estadosPreAdjudicacion, true);
+$bloqueadoSoloLectura = in_array($cot['estado'], $estadosSoloLectura, true);
+$bloqueado = $bloqueadoPreAprob || $bloqueadoPreAdj || $bloqueadoSoloLectura;
 $accionesBloqueadas = ['asociar','asociar_oc','agregar_proceso','adjuntar_archivo'];
+$accionesEliminar   = ['eliminar_archivo','eliminar_proceso','eliminar_asociacion','eliminar_oc_asociacion'];
+$accionesEditar     = ['editar_proceso','cambiar_estado_proceso'];
+$accionesBloqueadasPreAprob = array_merge($accionesBloqueadas, ['cambiar_estado'], $accionesEliminar, $accionesEditar);
+$accionesBloqueadasSoloLectura = $accionesBloqueadasPreAprob;
 
 $msg = null;
 if (!empty($_GET['obra_asignada'])) {
@@ -19,7 +29,13 @@ if (!empty($_GET['obra_asignada'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($bloqueado && in_array($action, $accionesBloqueadas, true)) {
+    if ($bloqueadoPreAprob && in_array($action, $accionesBloqueadasPreAprob, true)) {
+        $msg = ['warning', 'Esta cotización aún no fue aprobada por los validadores (estado: "'.ucfirst($cot['estado']).'"). Envíala a validación y espera la aprobación para continuar el seguimiento.'];
+        $action = '';
+    } elseif ($bloqueadoSoloLectura && in_array($action, $accionesBloqueadasSoloLectura, true)) {
+        $msg = ['warning', 'Esta cotización está en estado "'.ucfirst($cot['estado']).'". Solo puedes visualizar y verificar el seguimiento — no se permiten más cambios.'];
+        $action = '';
+    } elseif ($bloqueadoPreAdj && in_array($action, $accionesBloqueadas, true)) {
         $msg = ['warning', 'Esta cotización está en estado "'.ucfirst($cot['estado']).'". Las acciones se habilitarán cuando esté Adjudicada.'];
         $action = '';
     }
@@ -73,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $archivosSubidos = 0;
             if (!empty($_FILES['archivos']['name'][0])) {
-                $uploadsDir = __DIR__ . '/uploads';
+                $uploadsDir = __DIR__ . '/../uploads';
+                if (!is_dir($uploadsDir)) mkdir($uploadsDir, 0775, true);
                 for ($f = 0; $f < count($_FILES['archivos']['name']); $f++) {
                     if ($_FILES['archivos']['error'][$f] !== UPLOAD_ERR_OK) continue;
                     $nombreOrig = $_FILES['archivos']['name'][$f];
@@ -96,7 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'adjuntar_archivo') {
         $procIdAdj = (int)($_POST['proc_id'] ?? 0);
         if (!empty($_FILES['archivos_adj']['name'][0])) {
-            $uploadsDir = __DIR__ . '/uploads';
+            $uploadsDir = __DIR__ . '/../uploads';
+            if (!is_dir($uploadsDir)) mkdir($uploadsDir, 0775, true);
             $archivosSubidos = 0;
             for ($f = 0; $f < count($_FILES['archivos_adj']['name']); $f++) {
                 if ($_FILES['archivos_adj']['error'][$f] !== UPLOAD_ERR_OK) continue;
@@ -351,13 +369,41 @@ function getIconoArchivo($nombre, $iconos) {
 }
 
 $badgesEstado = [
-    'pendiente' => ['warning', 'hourglass-split'],
-    'propuesta' => ['info', 'file-earmark-text'],
+    'pendiente'   => ['warning', 'hourglass-split'],
+    'en_revision' => ['info', 'eye'],
+    'aprobada'    => ['success', 'shield-check'],
+    'rechazada'   => ['danger', 'x-octagon'],
+    'corregir'    => ['warning', 'pencil-square'],
+    'propuesta'   => ['info', 'file-earmark-text'],
     'negociacion' => ['primary', 'chat-dots'],
-    'adjudicada' => ['success', 'trophy'],
-    'desierta' => ['secondary', 'dash-circle'],
-    'cerrado' => ['dark', 'lock'],
+    'adjudicada'  => ['success', 'trophy'],
+    'desierta'    => ['secondary', 'dash-circle'],
+    'cerrado'     => ['dark', 'lock'],
 ];
+
+$stmtCotAprob = $pdo->prepare("SELECT a.*, u.usuario as usuario_login, u.cargo as usuario_cargo FROM cot_aprobaciones a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.cot_id = ? ORDER BY a.id");
+$stmtCotAprob->execute([$id]);
+$cotAprobaciones = $stmtCotAprob->fetchAll(PDO::FETCH_ASSOC);
+
+if ($bloqueadoPreAprob) {
+    $msgBloqueoAccion = 'Disponible cuando la cotización sea <strong>aprobada</strong> por los validadores.';
+} elseif ($bloqueadoSoloLectura) {
+    $msgBloqueoAccion = 'Cotización <strong>'.ucfirst($cot['estado']).'</strong>: solo lectura. No se permiten más cambios.';
+} else {
+    $msgBloqueoAccion = 'Disponible cuando la cotización esté <strong>Adjudicada</strong>.';
+}
+
+$aprobadoresDisponiblesCot = [];
+try {
+    $aprobadoresDisponiblesCot = $pdo->query("
+        SELECT a.usuario_id, u.nombre, u.usuario, u.cargo
+        FROM oc_aprobadores a
+        JOIN usuarios u ON a.usuario_id = u.id
+        ORDER BY u.nombre
+    ")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $aprobadoresDisponiblesCot = [];
+}
 
 $tiposProceso = [
     'seguimiento' => ['primary', 'geo-alt'],
@@ -403,6 +449,120 @@ require_once '../includes/header.php';
 <div class="alert alert-<?= $msg[0] ?> alert-dismissible fade show"><i class="bi bi-info-circle me-1"></i><?= $msg[1] ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
 <?php endif; ?>
 
+<?php
+$cotEnRevision = $cot['estado'] === 'en_revision';
+$cotAprobadaOK = $cot['estado'] === 'aprobada';
+$cotRechazada  = $cot['estado'] === 'rechazada';
+$cotCorregir   = $cot['estado'] === 'corregir';
+$puedeEnviarValidacion = in_array($cot['estado'], ['pendiente','corregir','rechazada'], true);
+$panelHeaderClass = 'bg-warning text-dark';
+$panelTitulo = 'Pendiente de validación';
+$panelIcono = 'shield-exclamation';
+if ($cotEnRevision) { $panelHeaderClass = 'bg-info text-white'; $panelTitulo = 'En revisión por validadores'; $panelIcono = 'eye'; }
+elseif ($cotAprobadaOK) { $panelHeaderClass = 'bg-success text-white'; $panelTitulo = 'Cotización aprobada — Seguimiento habilitado'; $panelIcono = 'shield-check'; }
+elseif ($cotRechazada) { $panelHeaderClass = 'bg-danger text-white'; $panelTitulo = 'Cotización rechazada'; $panelIcono = 'x-octagon'; }
+elseif ($cotCorregir) { $panelHeaderClass = 'bg-warning text-dark'; $panelTitulo = 'Validadores solicitaron correcciones'; $panelIcono = 'pencil-square'; }
+?>
+<?php if ($bloqueadoPreAprob || $cotAprobadaOK): ?>
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header <?= $panelHeaderClass ?> py-2 d-flex align-items-center justify-content-between">
+    <h6 class="mb-0"><i class="bi bi-<?= $panelIcono ?> me-2"></i><?= $panelTitulo ?></h6>
+    <?php if ($puedeEnviarValidacion && !empty($aprobadoresDisponiblesCot)): ?>
+    <button class="btn btn-sm btn-light fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEnviarValidacionSeg">
+      <i class="bi bi-send-check me-1"></i><?= $cot['estado']==='pendiente' ? 'Enviar a validación' : 'Reenviar a validación' ?>
+    </button>
+    <?php elseif ($puedeEnviarValidacion): ?>
+    <span class="badge bg-light text-dark"><i class="bi bi-exclamation-triangle me-1"></i>Sin validadores configurados</span>
+    <?php endif; ?>
+  </div>
+  <div class="card-body p-3">
+    <?php if ($bloqueadoPreAprob): ?>
+    <p class="small mb-2"><i class="bi bi-info-circle me-1"></i>
+      <?php if ($cot['estado']==='pendiente'): ?>
+        Para iniciar el seguimiento (asociar OC, agregar procesos, adjuntar archivos), primero envía esta cotización a los validadores.
+      <?php elseif ($cotEnRevision): ?>
+        Esperando respuesta de los validadores. El seguimiento se habilitará al ser aprobada.
+      <?php elseif ($cotRechazada): ?>
+        La cotización fue rechazada. Revisa los comentarios, edita la cotización y vuelve a enviarla a validación.
+      <?php elseif ($cotCorregir): ?>
+        Los validadores pidieron correcciones. Edita la cotización en "Ver Cotización" y reenvíala a validación.
+      <?php endif; ?>
+    </p>
+    <?php else: ?>
+    <p class="small mb-2 text-success"><i class="bi bi-check2-circle me-1"></i>Esta cotización fue aprobada por todos los validadores. Ya puedes continuar con el seguimiento del proceso comercial.</p>
+    <?php endif; ?>
+
+    <?php if (!empty($cotAprobaciones)): ?>
+    <div class="row g-2">
+      <?php foreach ($cotAprobaciones as $a):
+        $badgeMap = ['aprobada'=>'success','rechazada'=>'danger','corregir'=>'warning'];
+        $iconMap  = ['aprobada'=>'check-circle-fill','rechazada'=>'x-circle-fill','corregir'=>'pencil-fill'];
+        $bClass = $badgeMap[$a['estado']] ?? 'secondary';
+        $iClass = $iconMap[$a['estado']] ?? 'hourglass-split';
+      ?>
+      <div class="col-md-6">
+        <div class="border rounded p-2 small">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <strong><?= htmlspecialchars($a['nombre']) ?></strong>
+              <?php if (!empty($a['usuario_cargo'])): ?>
+              <br><span class="text-muted" style="font-size:11px;"><?= htmlspecialchars($a['usuario_cargo']) ?></span>
+              <?php endif; ?>
+            </div>
+            <span class="badge bg-<?= $bClass ?>"><i class="bi bi-<?= $iClass ?> me-1"></i><?= ucfirst($a['estado']) ?></span>
+          </div>
+          <?php if (!empty($a['fecha_respuesta'])): ?>
+          <div class="text-muted mt-1" style="font-size:11px;"><i class="bi bi-calendar-check me-1"></i><?= date('d/m/Y H:i', strtotime($a['fecha_respuesta'])) ?></div>
+          <?php else: ?>
+          <div class="text-muted mt-1" style="font-size:11px;"><i class="bi bi-hourglass me-1"></i>Esperando respuesta…</div>
+          <?php endif; ?>
+          <?php if (!empty($a['comentario'])): ?>
+          <div class="mt-1 p-2 bg-light rounded" style="font-size:11px;"><i class="bi bi-chat-text me-1"></i><?= htmlspecialchars($a['comentario']) ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  </div>
+</div>
+<?php endif; ?>
+
+<?php if ($puedeEnviarValidacion && !empty($aprobadoresDisponiblesCot)): ?>
+<!-- Modal Enviar Validación desde Seguimiento -->
+<div class="modal fade" id="modalEnviarValidacionSeg" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-send-check me-2"></i><?= $cot['estado']==='pendiente' ? 'Enviar' : 'Reenviar' ?> a Validación — Cotización N° <?= $cot['numero'] ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="solicitar_aprobacion_cot.php">
+        <input type="hidden" name="cot_id" value="<?= $id ?>">
+        <div class="modal-body">
+          <p class="text-muted mb-3"><i class="bi bi-info-circle me-1"></i>Selecciona los validadores. <strong>Todos</strong> los seleccionados deben aprobar para que sea válida.</p>
+          <div class="list-group">
+            <?php foreach ($aprobadoresDisponiblesCot as $ap): ?>
+            <label class="list-group-item d-flex align-items-center gap-3">
+              <input type="checkbox" name="aprobadores[]" value="<?= $ap['usuario_id'] ?>" class="form-check-input flex-shrink-0" checked>
+              <div>
+                <strong><?= htmlspecialchars($ap['nombre']) ?></strong>
+                <br><small class="text-muted">@<?= htmlspecialchars($ap['usuario']) ?> — <?= htmlspecialchars($ap['cargo'] ?? 'Sin cargo') ?></small>
+              </div>
+            </label>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning" onclick="return confirm('¿Enviar solicitud de validación?')"><i class="bi bi-send-check me-1"></i>Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <div class="row g-4">
   <!-- COLUMNA IZQUIERDA: Info + Estado + Asociaciones -->
   <div class="col-lg-4">
@@ -432,9 +592,16 @@ require_once '../includes/header.php';
     </div>
 
     <!-- Cambiar Estado -->
-    <div class="card shadow-sm border-0 mb-3">
+    <?php $bloqueoCambioEstado = $bloqueadoPreAprob || $bloqueadoSoloLectura; ?>
+    <div class="card shadow-sm border-0 mb-3<?= $bloqueoCambioEstado ? ' opacity-75' : '' ?>">
       <div class="card-header bg-dark text-white py-2"><h6 class="mb-0"><i class="bi bi-arrow-repeat me-2"></i>Cambiar Estado</h6></div>
       <div class="card-body p-3">
+        <?php if ($bloqueadoPreAprob): ?>
+        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>No puedes cambiar el estado mientras la cotización esté en validación. Espera a que sea <strong>aprobada</strong>, <strong>rechazada</strong> u <strong>observada</strong> por los validadores.</div>
+        <?php elseif ($bloqueadoSoloLectura): ?>
+        <div class="alert alert-secondary py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>La cotización está <strong><?= ucfirst($cot['estado']) ?></strong>. Solo puedes visualizar y verificar el seguimiento.</div>
+        <?php endif; ?>
+        <fieldset <?= $bloqueoCambioEstado ? 'disabled' : '' ?>>
         <form method="POST">
           <input type="hidden" name="action" value="cambiar_estado">
           <div class="mb-2">
@@ -453,6 +620,7 @@ require_once '../includes/header.php';
           </div>
           <button class="btn btn-warning btn-sm w-100"><i class="bi bi-check-lg me-1"></i>Actualizar Estado</button>
         </form>
+        </fieldset>
       </div>
     </div>
 
@@ -461,7 +629,7 @@ require_once '../includes/header.php';
       <div class="card-header bg-dark text-white py-2"><h6 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Asociar Cotización</h6></div>
       <div class="card-body p-3">
         <?php if ($bloqueado): ?>
-        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>Disponible cuando la cotización esté <strong>Adjudicada</strong>.</div>
+        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i><?= $msgBloqueoAccion ?></div>
         <?php endif; ?>
         <fieldset <?= $bloqueado ? 'disabled' : '' ?>>
         <form method="POST">
@@ -515,7 +683,7 @@ require_once '../includes/header.php';
       <div class="card-header bg-danger text-white py-2"><h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>Asociar Orden de Compra</h6></div>
       <div class="card-body p-3">
         <?php if ($bloqueado): ?>
-        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>Disponible cuando la cotización esté <strong>Adjudicada</strong>.</div>
+        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i><?= $msgBloqueoAccion ?></div>
         <?php endif; ?>
         <fieldset <?= $bloqueado ? 'disabled' : '' ?>>
 
@@ -674,11 +842,15 @@ require_once '../includes/header.php';
               <?php endif; ?>
               <?php if ($oca['nota']): ?><br><small class="fst-italic text-muted"><i class="bi bi-chat-left-text me-1"></i><?= htmlspecialchars($oca['nota']) ?></small><?php endif; ?>
             </div>
+            <?php if (!$bloqueadoPreAprob && !$bloqueadoSoloLectura): ?>
             <form method="POST" class="d-inline flex-shrink-0 ms-1">
               <input type="hidden" name="action" value="eliminar_oc_asociacion">
               <input type="hidden" name="asoc_oc_id" value="<?= $oca['id'] ?>">
               <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('¿Desvincular esta OC?')"><i class="bi bi-x"></i></button>
             </form>
+            <?php else: ?>
+            <button class="btn btn-sm btn-outline-danger py-0 px-1 flex-shrink-0 ms-1" disabled title="<?= $bloqueadoPreAprob ? 'No se permite eliminar mientras esté en validación' : 'Solo lectura' ?>"><i class="bi bi-x"></i></button>
+            <?php endif; ?>
           </div>
         </div>
         <?php endforeach; ?>
@@ -711,11 +883,15 @@ require_once '../includes/header.php';
             </div>
             <div class="d-flex flex-column gap-1">
               <a href="ver_cotizacion.php?id=<?= $a['cot_id_destino'] ?>&from_seg=<?= $id ?>" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-1" title="Ver cotización"><i class="bi bi-eye"></i></a>
+              <?php if (!$bloqueadoPreAprob && !$bloqueadoSoloLectura): ?>
               <form method="POST" class="d-inline">
                 <input type="hidden" name="action" value="eliminar_asociacion">
                 <input type="hidden" name="asoc_id" value="<?= $a['id'] ?>">
                 <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('¿Desvincular?')" title="Desvincular"><i class="bi bi-x"></i></button>
               </form>
+              <?php else: ?>
+              <button class="btn btn-sm btn-outline-danger py-0 px-1" disabled title="<?= $bloqueadoPreAprob ? 'No se permite eliminar mientras esté en validación' : 'Solo lectura' ?>"><i class="bi bi-x"></i></button>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -747,24 +923,57 @@ require_once '../includes/header.php';
       <div class="card-body p-2" style="max-height:300px;overflow-y:auto;">
         <?php foreach ($todosArchivos as $archDoc):
           $iconDoc = getIconoArchivo($archDoc['nombre_original'], $iconosArchivo);
+          $mimeDoc = $archDoc['tipo_mime'] ?? '';
+          $extDoc = strtolower(pathinfo($archDoc['nombre_original'], PATHINFO_EXTENSION));
+          $esImagenDoc = in_array($mimeDoc, ['image/jpeg','image/png','image/gif','image/webp']) || in_array($extDoc, ['jpg','jpeg','png','gif','webp']);
+          $esPdfDoc = $mimeDoc === 'application/pdf' || $extDoc === 'pdf';
+          $puedePrevisualizar = $esImagenDoc || $esPdfDoc;
+          $urlVer = '../descargar_archivo.php?id=' . $archDoc['id'] . '&accion=ver';
         ?>
         <div class="d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1" style="font-size:12px;">
           <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
-            <i class="bi <?= $iconDoc[0] ?> <?= $iconDoc[1] ?> me-1 flex-shrink-0" style="font-size:16px;"></i>
+            <?php if ($esImagenDoc): ?>
+              <a href="#" class="me-2 flex-shrink-0 preview-trigger" data-preview-url="<?= htmlspecialchars($urlVer) ?>" data-preview-tipo="imagen" data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>" title="Vista previa">
+                <img src="<?= htmlspecialchars($urlVer) ?>" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #dee2e6;">
+              </a>
+            <?php else: ?>
+              <i class="bi <?= $iconDoc[0] ?> <?= $iconDoc[1] ?> me-1 flex-shrink-0" style="font-size:16px;"></i>
+            <?php endif; ?>
             <div class="overflow-hidden">
-              <a href="../descargar_archivo.php?id=<?= $archDoc['id'] ?>&accion=ver" target="_blank" class="text-decoration-none text-truncate d-block" title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
+              <?php if ($puedePrevisualizar): ?>
+              <a href="#" class="text-decoration-none text-truncate d-block preview-trigger"
+                 data-preview-url="<?= htmlspecialchars($urlVer) ?>"
+                 data-preview-tipo="<?= $esImagenDoc ? 'imagen' : 'pdf' ?>"
+                 data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>"
+                 title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
                 <?= htmlspecialchars(mb_strimwidth($archDoc['nombre_original'], 0, 25, '...')) ?>
               </a>
+              <?php else: ?>
+              <a href="<?= htmlspecialchars($urlVer) ?>" target="_blank" class="text-decoration-none text-truncate d-block" title="<?= htmlspecialchars($archDoc['nombre_original']) ?>">
+                <?= htmlspecialchars(mb_strimwidth($archDoc['nombre_original'], 0, 25, '...')) ?>
+              </a>
+              <?php endif; ?>
               <small class="text-muted"><?= formatBytes($archDoc['tamano']) ?> — <?= date('d/m/Y', strtotime($archDoc['fecha'])) ?></small>
             </div>
           </div>
           <div class="d-flex gap-1 flex-shrink-0 ms-1">
+            <?php if ($puedePrevisualizar): ?>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 preview-trigger"
+                    data-preview-url="<?= htmlspecialchars($urlVer) ?>"
+                    data-preview-tipo="<?= $esImagenDoc ? 'imagen' : 'pdf' ?>"
+                    data-preview-nombre="<?= htmlspecialchars($archDoc['nombre_original']) ?>"
+                    title="Vista previa"><i class="bi bi-eye"></i></button>
+            <?php endif; ?>
             <a href="../descargar_archivo.php?id=<?= $archDoc['id'] ?>" class="btn btn-sm btn-outline-primary py-0 px-1" title="Descargar"><i class="bi bi-download"></i></a>
+            <?php if (!$bloqueadoPreAprob && !$bloqueadoSoloLectura): ?>
             <form method="POST" class="d-inline">
               <input type="hidden" name="action" value="eliminar_archivo">
               <input type="hidden" name="arch_id" value="<?= $archDoc['id'] ?>">
               <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('¿Eliminar este archivo?')" title="Eliminar"><i class="bi bi-trash"></i></button>
             </form>
+            <?php else: ?>
+            <button class="btn btn-sm btn-outline-danger py-0 px-1" disabled title="<?= $bloqueadoPreAprob ? 'No se permite eliminar mientras esté en validación' : 'Solo lectura' ?>"><i class="bi bi-trash"></i></button>
+            <?php endif; ?>
           </div>
         </div>
         <?php endforeach; ?>
@@ -780,7 +989,7 @@ require_once '../includes/header.php';
       <div class="card-header bg-danger text-white py-2"><h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Agregar Proceso / Seguimiento</h6></div>
       <div class="card-body p-3">
         <?php if ($bloqueado): ?>
-        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>Disponible cuando la cotización esté <strong>Adjudicada</strong>.</div>
+        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i><?= $msgBloqueoAccion ?></div>
         <?php endif; ?>
         <fieldset <?= $bloqueado ? 'disabled' : '' ?>>
         <form method="POST" enctype="multipart/form-data" class="row g-2">
@@ -828,7 +1037,7 @@ require_once '../includes/header.php';
       <div class="card-header bg-dark text-white py-2"><h6 class="mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Adjuntar Archivos a la Obra</h6></div>
       <div class="card-body p-3">
         <?php if ($bloqueado): ?>
-        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i>Disponible cuando la cotización esté <strong>Adjudicada</strong>.</div>
+        <div class="alert alert-warning py-2 px-2 mb-2 small"><i class="bi bi-lock me-1"></i><?= $msgBloqueoAccion ?></div>
         <?php endif; ?>
         <fieldset <?= $bloqueado ? 'disabled' : '' ?>>
         <form method="POST" enctype="multipart/form-data">
@@ -878,22 +1087,27 @@ require_once '../includes/header.php';
                     <span class="ms-1" style="font-size:11px;"><span class="badge bg-secondary"><?= ucfirst($p['estado_anterior']) ?></span> → <span class="badge bg-warning text-dark"><?= ucfirst($p['estado_nuevo']) ?></span></span>
                     <?php endif; ?>
                   </div>
+                  <?php $procBloq = $bloqueadoPreAprob || $bloqueadoSoloLectura; ?>
                   <div class="d-flex gap-1 align-items-center">
                     <form method="POST" class="d-inline">
                       <input type="hidden" name="action" value="cambiar_estado_proceso">
                       <input type="hidden" name="proc_id" value="<?= $p['id'] ?>">
-                      <select name="estado_proceso" class="form-select form-select-sm py-0" style="font-size:11px;width:auto;min-width:120px;" onchange="this.form.submit()">
+                      <select name="estado_proceso" class="form-select form-select-sm py-0" style="font-size:11px;width:auto;min-width:120px;" onchange="this.form.submit()" <?= $procBloq ? 'disabled' : '' ?>>
                         <?php foreach ($estadosProceso as $epk => $epv): ?>
                         <option value="<?= $epk ?>" <?= $epActual === $epk ? 'selected' : '' ?>><?= $epv[2] ?></option>
                         <?php endforeach; ?>
                       </select>
                     </form>
-                    <button class="btn btn-sm btn-outline-warning py-0 px-1" data-bs-toggle="modal" data-bs-target="#editProc<?= $p['id'] ?>" title="Editar"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-warning py-0 px-1" data-bs-toggle="modal" data-bs-target="#editProc<?= $p['id'] ?>" title="Editar" <?= $procBloq ? 'disabled' : '' ?>><i class="bi bi-pencil"></i></button>
+                    <?php if (!$procBloq): ?>
                     <form method="POST" class="d-inline">
                       <input type="hidden" name="action" value="eliminar_proceso">
                       <input type="hidden" name="proc_id" value="<?= $p['id'] ?>">
                       <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('¿Eliminar este proceso?')"><i class="bi bi-trash"></i></button>
                     </form>
+                    <?php else: ?>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1" disabled title="<?= $bloqueadoPreAprob ? 'No se permite eliminar mientras esté en validación' : 'Solo lectura' ?>"><i class="bi bi-trash"></i></button>
+                    <?php endif; ?>
                   </div>
                 </div>
                 <?php if ($p['descripcion']): ?>
@@ -903,20 +1117,52 @@ require_once '../includes/header.php';
                 <div class="mt-1 mb-1">
                   <?php foreach ($archivosPorProceso[$p['id']] as $archP):
                     $iconArch = getIconoArchivo($archP['nombre_original'], $iconosArchivo);
-                    $esImagen = in_array($archP['tipo_mime'], ['image/jpeg','image/png','image/gif','image/webp']);
+                    $mimeP = $archP['tipo_mime'] ?? '';
+                    $extP = strtolower(pathinfo($archP['nombre_original'], PATHINFO_EXTENSION));
+                    $esImagen = in_array($mimeP, ['image/jpeg','image/png','image/gif','image/webp']) || in_array($extP, ['jpg','jpeg','png','gif','webp']);
+                    $esPdfP = $mimeP === 'application/pdf' || $extP === 'pdf';
+                    $puedePrevP = $esImagen || $esPdfP;
+                    $urlVerP = '../descargar_archivo.php?id=' . $archP['id'] . '&accion=ver';
                   ?>
                   <div class="d-inline-flex align-items-center border rounded px-2 py-1 me-1 mb-1 bg-light" style="font-size:11px;">
-                    <i class="bi <?= $iconArch[0] ?> <?= $iconArch[1] ?> me-1"></i>
-                    <a href="../descargar_archivo.php?id=<?= $archP['id'] ?>&accion=ver" target="_blank" class="text-decoration-none me-1" title="<?= htmlspecialchars($archP['nombre_original']) ?>">
+                    <?php if ($esImagen): ?>
+                      <a href="#" class="me-1 preview-trigger" data-preview-url="<?= htmlspecialchars($urlVerP) ?>" data-preview-tipo="imagen" data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>" title="Vista previa">
+                        <img src="<?= htmlspecialchars($urlVerP) ?>" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:3px;border:1px solid #dee2e6;">
+                      </a>
+                    <?php else: ?>
+                      <i class="bi <?= $iconArch[0] ?> <?= $iconArch[1] ?> me-1"></i>
+                    <?php endif; ?>
+                    <?php if ($puedePrevP): ?>
+                    <a href="#" class="text-decoration-none me-1 preview-trigger"
+                       data-preview-url="<?= htmlspecialchars($urlVerP) ?>"
+                       data-preview-tipo="<?= $esImagen ? 'imagen' : 'pdf' ?>"
+                       data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>"
+                       title="<?= htmlspecialchars($archP['nombre_original']) ?>">
                       <?= htmlspecialchars(mb_strimwidth($archP['nombre_original'], 0, 30, '...')) ?>
                     </a>
+                    <?php else: ?>
+                    <a href="<?= htmlspecialchars($urlVerP) ?>" target="_blank" class="text-decoration-none me-1" title="<?= htmlspecialchars($archP['nombre_original']) ?>">
+                      <?= htmlspecialchars(mb_strimwidth($archP['nombre_original'], 0, 30, '...')) ?>
+                    </a>
+                    <?php endif; ?>
                     <small class="text-muted me-1">(<?= formatBytes($archP['tamano']) ?>)</small>
+                    <?php if ($puedePrevP): ?>
+                    <button type="button" class="btn btn-link btn-sm text-secondary p-0 me-1 preview-trigger"
+                            data-preview-url="<?= htmlspecialchars($urlVerP) ?>"
+                            data-preview-tipo="<?= $esImagen ? 'imagen' : 'pdf' ?>"
+                            data-preview-nombre="<?= htmlspecialchars($archP['nombre_original']) ?>"
+                            style="font-size:11px;" title="Vista previa"><i class="bi bi-eye"></i></button>
+                    <?php endif; ?>
                     <a href="../descargar_archivo.php?id=<?= $archP['id'] ?>" class="text-primary me-1" title="Descargar"><i class="bi bi-download"></i></a>
+                    <?php if (!$procBloq): ?>
                     <form method="POST" class="d-inline">
                       <input type="hidden" name="action" value="eliminar_archivo">
                       <input type="hidden" name="arch_id" value="<?= $archP['id'] ?>">
                       <button class="btn btn-link btn-sm text-danger p-0" style="font-size:11px;" onclick="return confirm('¿Eliminar este archivo?')" title="Eliminar"><i class="bi bi-x-circle"></i></button>
                     </form>
+                    <?php else: ?>
+                    <button class="btn btn-link btn-sm text-danger p-0" style="font-size:11px;" disabled title="<?= $bloqueadoPreAprob ? 'No se permite eliminar mientras esté en validación' : 'Solo lectura' ?>"><i class="bi bi-x-circle"></i></button>
+                    <?php endif; ?>
                   </div>
                   <?php endforeach; ?>
                 </div>
@@ -1045,5 +1291,87 @@ function prevOCExt(input) {
 })();
 </script>
 <?php endif; ?>
+
+<!-- Modal Vista Previa Archivos -->
+<div class="modal fade" id="modalPreviewArchivo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title text-truncate" id="modalPreviewArchivoLabel"><i class="bi bi-eye me-2"></i><span id="previewNombre">Vista previa</span></h6>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <a id="previewDescargarBtn" href="#" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-download me-1"></i>Descargar</a>
+          <a id="previewAbrirBtn" href="#" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir en pestaña</a>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0 bg-light" style="min-height:70vh;">
+        <div id="previewContenido" class="d-flex align-items-center justify-content-center" style="min-height:70vh;">
+          <div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>Cargando vista previa…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modalEl = document.getElementById('modalPreviewArchivo');
+  if (!modalEl) return;
+  var bsModal = null;
+  function getModal(){
+    if (!bsModal && typeof bootstrap !== 'undefined') bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    return bsModal;
+  }
+  var contenedor = document.getElementById('previewContenido');
+  var nombreEl   = document.getElementById('previewNombre');
+  var descBtn    = document.getElementById('previewDescargarBtn');
+  var abrirBtn   = document.getElementById('previewAbrirBtn');
+
+  function abrirPreview(url, tipo, nombre){
+    if (!url) return;
+    nombreEl.textContent = nombre || 'Vista previa';
+    abrirBtn.href = url;
+    descBtn.href = url.replace(/(\?|&)accion=ver/, '$1accion=descargar');
+    if (descBtn.href === url) descBtn.href = url; // fallback
+    contenedor.innerHTML = '';
+    if (tipo === 'imagen') {
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = nombre || '';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '85vh';
+      img.style.objectFit = 'contain';
+      img.style.display  = 'block';
+      img.style.margin   = '0 auto';
+      contenedor.appendChild(img);
+    } else if (tipo === 'pdf') {
+      var ifr = document.createElement('iframe');
+      ifr.src = url;
+      ifr.style.width = '100%';
+      ifr.style.height = '85vh';
+      ifr.style.border = '0';
+      contenedor.appendChild(ifr);
+    } else {
+      contenedor.innerHTML = '<div class="text-muted p-4">No hay vista previa disponible. <a href="'+url+'" target="_blank">Abrir archivo</a></div>';
+    }
+    var m = getModal();
+    if (m) m.show();
+  }
+
+  document.addEventListener('click', function(ev){
+    var trigger = ev.target.closest('.preview-trigger');
+    if (!trigger) return;
+    ev.preventDefault();
+    abrirPreview(
+      trigger.getAttribute('data-preview-url'),
+      trigger.getAttribute('data-preview-tipo'),
+      trigger.getAttribute('data-preview-nombre')
+    );
+  });
+
+  modalEl.addEventListener('hidden.bs.modal', function(){
+    contenedor.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>Cargando vista previa…</div>';
+  });
+})();
+</script>
 
 <?php require_once '../includes/footer.php'; ?>
