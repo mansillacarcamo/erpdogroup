@@ -4,12 +4,19 @@ requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   $cotId = (int)($_POST['cot_id'] ?? 0);
-  if ($_POST['action'] === 'cambiar_estado' && !empty($_POST['estado'])) {
-    $pdo->prepare("UPDATE cotizaciones SET estado = ? WHERE id = ?")->execute([$_POST['estado'], $cotId]);
-  }
-  if ($_POST['action'] === 'eliminar' && in_array($usuario['rol'], ['admin', 'gerente_comercial'])) {
-    $pdo->prepare("DELETE FROM cot_items WHERE cot_id = ?")->execute([$cotId]);
-    $pdo->prepare("DELETE FROM cotizaciones WHERE id = ?")->execute([$cotId]);
+  $stCotEstado = $pdo->prepare("SELECT estado FROM cotizaciones WHERE id = ?");
+  $stCotEstado->execute([$cotId]);
+  $estadoActualCot = $stCotEstado->fetchColumn();
+  $bloqueadoPorRevision = $estadoActualCot === 'en_revision';
+
+  if (!$bloqueadoPorRevision) {
+    if ($_POST['action'] === 'cambiar_estado' && !empty($_POST['estado'])) {
+      $pdo->prepare("UPDATE cotizaciones SET estado = ? WHERE id = ?")->execute([$_POST['estado'], $cotId]);
+    }
+    if ($_POST['action'] === 'eliminar' && in_array($usuario['rol'], ['admin', 'gerente_comercial'])) {
+      $pdo->prepare("DELETE FROM cot_items WHERE cot_id = ?")->execute([$cotId]);
+      $pdo->prepare("DELETE FROM cotizaciones WHERE id = ?")->execute([$cotId]);
+    }
   }
   header('Location: historial_cotizaciones.php?' . http_build_query($_GET)); exit;
 }
@@ -192,6 +199,7 @@ $queryParams = $_GET;
                 </td>
                 <td><small><?= htmlspecialchars($c['creada_por']) ?></small></td>
                 <td>
+                  <?php $cotEnRev = $c['estado'] === 'en_revision'; ?>
                   <div class="d-flex gap-1 flex-wrap">
                     <a href="ver_cotizacion.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
                     <?php if (in_array($c['estado'], ['pendiente', 'corregir'])): ?>
@@ -201,7 +209,7 @@ $queryParams = $_GET;
                     <form method="POST" class="d-inline">
                       <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
                       <input type="hidden" name="action" value="cambiar_estado">
-                      <select name="estado" class="form-select form-select-sm" style="width:auto;display:inline-block" onchange="this.form.submit()">
+                      <select name="estado" class="form-select form-select-sm" style="width:auto;display:inline-block" onchange="this.form.submit()" <?= $cotEnRev ? 'disabled title="En validación — no se puede cambiar estado"' : '' ?>>
                         <option value="">Estado</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="propuesta">Propuesta</option>
@@ -212,11 +220,15 @@ $queryParams = $_GET;
                       </select>
                     </form>
                     <?php if (in_array($usuario['rol'], ['admin', 'gerente_comercial'])): ?>
-                    <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar Cotización N° <?= $c['numero'] ?>?')">
-                      <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
-                      <input type="hidden" name="action" value="eliminar">
-                      <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
-                    </form>
+                      <?php if (!$cotEnRev): ?>
+                      <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar Cotización N° <?= $c['numero'] ?>?')">
+                        <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
+                        <input type="hidden" name="action" value="eliminar">
+                        <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                      </form>
+                      <?php else: ?>
+                      <button class="btn btn-sm btn-outline-danger" disabled title="En validación — no se puede eliminar"><i class="bi bi-trash"></i></button>
+                      <?php endif; ?>
                     <?php endif; ?>
                   </div>
                 </td>
@@ -278,6 +290,7 @@ $queryParams = $_GET;
             </td>
             <td><small><?= htmlspecialchars($c['creada_por']) ?></small></td>
             <td>
+              <?php $cotEnRev = $c['estado'] === 'en_revision'; ?>
               <div class="d-flex gap-1 flex-wrap">
                 <a href="ver_cotizacion.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
                 <?php if (in_array($c['estado'], ['pendiente', 'corregir'])): ?>
@@ -287,7 +300,7 @@ $queryParams = $_GET;
                 <form method="POST" class="d-inline">
                   <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
                   <input type="hidden" name="action" value="cambiar_estado">
-                  <select name="estado" class="form-select form-select-sm" style="width:auto;display:inline-block" onchange="this.form.submit()">
+                  <select name="estado" class="form-select form-select-sm" style="width:auto;display:inline-block" onchange="this.form.submit()" <?= $cotEnRev ? 'disabled title="En validación — no se puede cambiar estado"' : '' ?>>
                     <option value="">Estado</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="propuesta">Propuesta</option>
@@ -298,11 +311,15 @@ $queryParams = $_GET;
                   </select>
                 </form>
                 <?php if (in_array($usuario['rol'], ['admin', 'gerente_comercial'])): ?>
-                <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar Cotización N° <?= $c['numero'] ?>?')">
-                  <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
-                  <input type="hidden" name="action" value="eliminar">
-                  <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
-                </form>
+                  <?php if (!$cotEnRev): ?>
+                  <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar Cotización N° <?= $c['numero'] ?>?')">
+                    <input type="hidden" name="cot_id" value="<?= $c['id'] ?>">
+                    <input type="hidden" name="action" value="eliminar">
+                    <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                  </form>
+                  <?php else: ?>
+                  <button class="btn btn-sm btn-outline-danger" disabled title="En validación — no se puede eliminar"><i class="bi bi-trash"></i></button>
+                  <?php endif; ?>
                 <?php endif; ?>
               </div>
             </td>

@@ -1,0 +1,37 @@
+---
+# Receta de despliegue para cPanel Git Version Control.
+# Cuando hagas "Deploy HEAD Commit" en cPanel, cPanel ejecuta estas tasks
+# y sincroniza el clon del repo con tu carpeta public del dominio.
+#
+# AJUSTE NECESARIO: cambia DEPLOYPATH a la ruta real donde sirve tu dominio.
+#   - Dominio principal:   /home/USUARIO/public_html/
+#   - Subdominio dedicado: /home/USUARIO/gestion.dogroup.cl/
+#   - Subdirectorio:       /home/USUARIO/public_html/gestion.dogroup.cl/
+#
+# Excluye base de datos, uploads, git interno, scripts internos y otros zips
+# para NO pisar datos de producción.
+
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/dogroupc/public_html/gestion.dogroup.cl/
+    - /bin/rsync -av --delete
+        --exclude='.git/'
+        --exclude='.gitignore'
+        --exclude='.cpanel.yml'
+        --exclude='ocdogroup.db'
+        --exclude='ocdogroup.db-journal'
+        --exclude='ocdogroup.db-wal'
+        --exclude='ocdogroup.db-shm'
+        --exclude='uploads/'
+        --exclude='backups/'
+        --exclude='smtp_config.php'
+        --exclude='*.zip'
+        --exclude='empaquetar-benhosting.ps1'
+        --exclude='iniciar-localhost.ps1'
+        --exclude='restaurar.ps1'
+        --exclude='backup_auto.ps1'
+        --exclude='response.html'
+        --exclude='resp.html'
+        --exclude='_test_*.php'
+        --exclude='_migrar_*.php'
+        ./ $DEPLOYPATH

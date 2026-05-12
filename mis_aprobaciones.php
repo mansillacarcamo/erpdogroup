@@ -104,7 +104,15 @@ try {
         SELECT a.*, o.numero, o.fecha, o.proveedor_nombre, o.obra, o.neto, o.iva, o.total, o.preparada_por, o.moneda
         FROM oc_aprobaciones a
         JOIN ordenes_compra o ON a.oc_id = o.id
+        LEFT JOIN oc_aprobadores oa ON oa.usuario_id = a.usuario_id
         WHERE a.usuario_id = ? AND a.estado = 'pendiente'
+          AND NOT EXISTS (
+            SELECT 1 FROM oc_aprobaciones a2
+            LEFT JOIN oc_aprobadores oa2 ON oa2.usuario_id = a2.usuario_id
+            WHERE a2.oc_id = a.oc_id
+              AND a2.estado = 'pendiente'
+              AND COALESCE(oa2.orden, 99) < COALESCE(oa.orden, 99)
+          )
         ORDER BY a.creado_en DESC
     ");
     $stmtPend->execute([$usuario['id']]);
@@ -132,7 +140,15 @@ try {
         SELECT a.*, c.numero, c.fecha, c.cliente_nombre, c.cliente_obra, c.subtotal, c.iva, c.total, c.creada_por
         FROM cot_aprobaciones a
         JOIN cotizaciones c ON a.cot_id = c.id
+        LEFT JOIN oc_aprobadores oa ON oa.usuario_id = a.usuario_id
         WHERE a.usuario_id = ? AND a.estado = 'pendiente'
+          AND NOT EXISTS (
+            SELECT 1 FROM cot_aprobaciones a2
+            LEFT JOIN oc_aprobadores oa2 ON oa2.usuario_id = a2.usuario_id
+            WHERE a2.cot_id = a.cot_id
+              AND a2.estado = 'pendiente'
+              AND COALESCE(oa2.orden, 99) < COALESCE(oa.orden, 99)
+          )
         ORDER BY a.creado_en DESC
     ");
     $stmtCotPend->execute([$usuario['id']]);
@@ -182,6 +198,64 @@ try {
 } catch (Exception $e) {
     $notifOCRecibidas = [];
 }
+
+// Detectar items donde "ya aprobaron los anteriores y solo falta el usuario actual"
+// (sirve para popup destacado al Gerente General)
+$cotSoloFaltaUsted = [];
+$ocSoloFaltaUsted = [];
+try {
+    foreach ($cotPendientes as $cp) {
+        $stOtros = $pdo->prepare("
+            SELECT a.estado, COALESCE(oa.orden, 99) AS orden
+            FROM cot_aprobaciones a
+            LEFT JOIN oc_aprobadores oa ON oa.usuario_id = a.usuario_id
+            WHERE a.cot_id = ? AND a.usuario_id != ?
+        ");
+        $stOtros->execute([$cp['cot_id'], $usuario['id']]);
+        $otros = $stOtros->fetchAll(PDO::FETCH_ASSOC);
+        $hayAnteriorPendiente = false;
+        $hayAnteriorAprobado = false;
+        $stMio = $pdo->prepare("SELECT COALESCE(oa.orden, 99) AS orden FROM oc_aprobadores oa WHERE oa.usuario_id = ?");
+        $stMio->execute([$usuario['id']]);
+        $miOrden = (int)($stMio->fetchColumn() ?: 99);
+        foreach ($otros as $o) {
+            if ((int)$o['orden'] < $miOrden) {
+                if ($o['estado'] === 'aprobada') $hayAnteriorAprobado = true;
+                elseif ($o['estado'] === 'pendiente') $hayAnteriorPendiente = true;
+            }
+        }
+        if ($hayAnteriorAprobado && !$hayAnteriorPendiente) {
+            $cotSoloFaltaUsted[] = $cp;
+        }
+    }
+    foreach ($pendientes as $op) {
+        $stOtros = $pdo->prepare("
+            SELECT a.estado, COALESCE(oa.orden, 99) AS orden
+            FROM oc_aprobaciones a
+            LEFT JOIN oc_aprobadores oa ON oa.usuario_id = a.usuario_id
+            WHERE a.oc_id = ? AND a.usuario_id != ?
+        ");
+        $stOtros->execute([$op['oc_id'], $usuario['id']]);
+        $otros = $stOtros->fetchAll(PDO::FETCH_ASSOC);
+        $hayAnteriorPendiente = false;
+        $hayAnteriorAprobado = false;
+        $stMio = $pdo->prepare("SELECT COALESCE(oa.orden, 99) AS orden FROM oc_aprobadores oa WHERE oa.usuario_id = ?");
+        $stMio->execute([$usuario['id']]);
+        $miOrden = (int)($stMio->fetchColumn() ?: 99);
+        foreach ($otros as $o) {
+            if ((int)$o['orden'] < $miOrden) {
+                if ($o['estado'] === 'aprobada') $hayAnteriorAprobado = true;
+                elseif ($o['estado'] === 'pendiente') $hayAnteriorPendiente = true;
+            }
+        }
+        if ($hayAnteriorAprobado && !$hayAnteriorPendiente) {
+            $ocSoloFaltaUsted[] = $op;
+        }
+    }
+} catch (Exception $e) {}
+
+$esGerenteGeneral = ($usuario['rol'] ?? '') === 'gerente_general';
+$mostrarPopupFinal = $esGerenteGeneral && (count($cotSoloFaltaUsted) + count($ocSoloFaltaUsted)) > 0 && empty($_COOKIE['popup_final_cerrado_'.$usuario['id']]);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'marcar_leida') {
     $nid = (int)($_POST['notif_id'] ?? 0);
@@ -611,5 +685,73 @@ require_once 'includes/header.php';
     <?php endif; ?>
   </div>
 </div>
+
+<?php if ($mostrarPopupFinal): ?>
+<!-- Popup: solo falta tu aprobación (Gerente General) -->
+<div class="modal fade" id="modalSoloFaltaUsted" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Tu aprobación es la última que falta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="fw-semibold mb-2">El Gerente de Finanzas ya aprobó <?= count($cotSoloFaltaUsted) + count($ocSoloFaltaUsted) ?> documento(s). Solo falta tu validación para cerrar el proceso.</p>
+
+        <?php if (!empty($cotSoloFaltaUsted)): ?>
+        <div class="mb-2">
+          <strong class="text-success"><i class="bi bi-file-earmark-text me-1"></i>Cotizaciones (<?= count($cotSoloFaltaUsted) ?>)</strong>
+          <ul class="mb-0 mt-1 small">
+            <?php foreach ($cotSoloFaltaUsted as $c): ?>
+            <li>
+              <a href="#cot-<?= $c['id'] ?>" data-bs-dismiss="modal" class="text-decoration-none">
+                N° <?= htmlspecialchars($c['numero']) ?> — <?= htmlspecialchars($c['cliente_nombre']) ?> — $<?= number_format($c['total'], 0, ',', '.') ?>
+              </a>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($ocSoloFaltaUsted)): ?>
+        <div class="mb-2">
+          <strong class="text-success"><i class="bi bi-receipt me-1"></i>Órdenes de Compra (<?= count($ocSoloFaltaUsted) ?>)</strong>
+          <ul class="mb-0 mt-1 small">
+            <?php foreach ($ocSoloFaltaUsted as $o): ?>
+            <li>
+              N° <?= htmlspecialchars($o['numero']) ?> — <?= htmlspecialchars($o['proveedor_nombre']) ?> — $<?= number_format($o['total'], 0, ',', '.') ?>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+        <?php endif; ?>
+
+        <p class="small text-muted mb-0 mt-2"><i class="bi bi-info-circle me-1"></i>Revisa cada documento y deja registrada tu decisión en el listado de pendientes.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" id="btnPopupFinalRecordar">Recordar más tarde</button>
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal"><i class="bi bi-check2 me-1"></i>Revisar ahora</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  function abrir(){
+    var el = document.getElementById('modalSoloFaltaUsted');
+    if (!el) return;
+    if (typeof bootstrap === 'undefined') { setTimeout(abrir, 80); return; }
+    bootstrap.Modal.getOrCreateInstance(el).show();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', abrir);
+  else abrir();
+  var btn = document.getElementById('btnPopupFinalRecordar');
+  if (btn) btn.addEventListener('click', function(){
+    document.cookie = 'popup_final_cerrado_<?= (int)$usuario['id'] ?>=1; max-age=3600; path=/';
+    bootstrap.Modal.getInstance(document.getElementById('modalSoloFaltaUsted')).hide();
+  });
+})();
+</script>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>

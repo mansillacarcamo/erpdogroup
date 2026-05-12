@@ -129,6 +129,10 @@ try {
   </form>
   <?php endif; ?>
 
+  <?php if ($oc['estado'] === 'en_revision'): ?>
+  <a href="oc_nueva.php" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left me-1"></i>Volver atrás</a>
+  <?php endif; ?>
+
   <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalEnviarOCAdmin"><i class="bi bi-diagram-3 me-1"></i>Enviar Estado de Proceso</button>
 
   <a href="estados_pago.php?tipo=pago_proveedor&from_oc=<?= $id ?>" class="btn btn-outline-success ms-1" title="Generar registro de Estado de Pago a partir de esta OC">
